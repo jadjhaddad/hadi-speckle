@@ -48,30 +48,39 @@ public class cPlugin
         SpeckleLog.Logger.Information("🔍 Application.Current type: {Type}", Application.Current.GetType().FullName);
       }
 
-      // Initialize Avalonia once - BUT check if it's already initialized by another means
-      if (!_avaloniaInitialized && Application.Current == null)
+      // Check if Avalonia is ALREADY initialized in this PROCESS (not just this plugin instance)
+      // Application.Current persists across plugin reloads within the same ETABS process
+      if (Application.Current != null)
       {
-        SpeckleLog.Logger.Information("✅ Initializing Avalonia for the first time");
-
-        // Build and initialize Avalonia on this thread
-        var builder = AppBuilder
-          .Configure<DesktopUI2.App>()
-          .UsePlatformDetect()
-          .With(new SkiaOptions { MaxGpuResourceSizeBytes = 8096000 })
-          .With(new Win32PlatformOptions { AllowEglInitialization = true, EnableMultitouch = false })
-          .LogToTrace()
-          .UseReactiveUI();
-
-        // Initialize but don't start the main loop yet
-        builder.SetupWithoutStarting();
+        SpeckleLog.Logger.Information("⚠️ Avalonia already initialized in this process - skipping initialization");
         _avaloniaInitialized = true;
-
-        SpeckleLog.Logger.Information("✅ Avalonia initialized successfully");
       }
-      else if (Application.Current != null)
+      else if (!_avaloniaInitialized)
       {
-        SpeckleLog.Logger.Information("⚠️ Application.Current already exists - skipping initialization");
-        _avaloniaInitialized = true; // Mark as initialized even if we didn't do it
+        SpeckleLog.Logger.Information("✅ Initializing Avalonia for the first time in this process");
+
+        try
+        {
+          // Build and initialize Avalonia on this thread
+          var builder = AppBuilder
+            .Configure<DesktopUI2.App>()
+            .UsePlatformDetect()
+            .With(new SkiaOptions { MaxGpuResourceSizeBytes = 8096000 })
+            .With(new Win32PlatformOptions { AllowEglInitialization = true, EnableMultitouch = false })
+            .LogToTrace()
+            .UseReactiveUI();
+
+          // Initialize but don't start the main loop yet
+          builder.SetupWithoutStarting();
+          _avaloniaInitialized = true;
+
+          SpeckleLog.Logger.Information("✅ Avalonia initialized successfully");
+        }
+        catch (Exception ex)
+        {
+          SpeckleLog.Logger.Error(ex, "❌ Failed to initialize Avalonia");
+          throw;
+        }
       }
 
       // If window exists and is visible, just focus it
