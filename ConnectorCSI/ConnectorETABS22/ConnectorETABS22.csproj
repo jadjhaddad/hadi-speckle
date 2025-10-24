@@ -39,9 +39,6 @@
       <HintPath>..\..\..\..\..\..\..\Program Files\Computers and Structures\ETABS 22\ETABSv1.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Objects">
-      <HintPath>..\..\..\..\..\AppData\Roaming\Speckle\Kits\Objects\Objects.dll</HintPath>
-    </Reference>
 
     <!-- System DLLs -->
     <Reference Include="System" />
@@ -78,6 +75,7 @@
     <!-- Speckle Project References -->
     <ProjectReference Include="..\..\Core\Core\Core.csproj" />
     <ProjectReference Include="..\..\DesktopUI2\DesktopUI2\DesktopUI2.csproj" />
+    <ProjectReference Include="..\..\Objects\Objects\Objects.csproj" />
     <ProjectReference Include="..\..\Objects\Converters\StructuralUtilities\PolygonMesher\PolygonMesher.csproj" />
   </ItemGroup>
 

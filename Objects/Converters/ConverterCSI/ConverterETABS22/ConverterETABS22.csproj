@@ -20,9 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\Core\Core\Core.csproj">
-      <Private>False</Private>
-    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\Core\Core\Core.csproj" />
     <ProjectReference Include="..\..\..\Objects\Objects.csproj" />
     <ProjectReference Include="..\..\StructuralUtilities\PolygonMesher\PolygonMesher.csproj" />
   </ItemGroup>
@@ -42,6 +40,12 @@
   <Target Name="CopyDependenciesToKitfolder" AfterTargets="CopyToKitFolder" Condition="'$(IsDesktopBuild)' == true">
     <Message Text="Copying dependencies to kit folder" />
     <Copy Condition="$([MSBuild]::IsOsPlatform('Windows'))" SourceFiles="@(DllsToCopy)" DestinationFolder="$(AppData)\Speckle\Kits\Objects" />
+  </Target>
+
+  <!-- Copy converter DLL to ETABS Plug-Ins folder for dynamic loading -->
+  <Target Name="CopyToETABSPlugins" AfterTargets="PostBuildEvent">
+    <Message Text="Copying converter to ETABS 22 Plug-Ins folder" />
+    <Copy Condition="$([MSBuild]::IsOsPlatform('Windows'))" SourceFiles="$(TargetPath)" DestinationFolder="C:\ProgramData\Computers and Structures\ETABS 22\Plug-Ins\" />
   </Target>
 
   <Import Project="..\ConverterCSIShared\ConverterCSIShared.projitems" Label="Shared" />
