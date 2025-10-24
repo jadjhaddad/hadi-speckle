@@ -41,13 +41,32 @@ public class cPlugin
 
   public static void CreateOrFocusSpeckle()
   {
-    if (MainWindow == null)
+    // Check if Avalonia is already initialized
+    if (Application.Current == null)
     {
+      // First time - initialize Avalonia
       BuildAvaloniaApp().Start(AppMain, null);
     }
+    else if (MainWindow == null || !MainWindow.IsVisible)
+    {
+      // Avalonia already initialized, just recreate the window
+      var viewModel = new MainViewModel(Bindings);
 
-    MainWindow.Show();
-    MainWindow.Activate();
+      var streams = Bindings.GetStreamsInFile();
+      streams = streams ?? new List<DesktopUI2.Models.StreamState>();
+      Bindings.UpdateSavedStreams?.Invoke(streams);
+
+      MainWindow = new MainWindow { DataContext = viewModel };
+      MainWindow.Closed += SpeckleWindowClosed;
+      MainWindow.Closing += SpeckleWindowClosed;
+      MainWindow.Show();
+    }
+    else
+    {
+      // Window already exists and is visible - just focus it
+      MainWindow.Show();
+      MainWindow.Activate();
+    }
   }
 
   private static void AppMain(Application app, string[] args)
@@ -75,6 +94,15 @@ public class cPlugin
   private static void SpeckleWindowClosed(object sender, EventArgs e)
   {
     isSpeckleClosed = true;
+
+    // Clean up window reference so it can be recreated
+    if (MainWindow != null)
+    {
+      MainWindow.Closed -= SpeckleWindowClosed;
+      MainWindow.Closing -= SpeckleWindowClosed;
+      MainWindow = null;
+    }
+
     Process[] processCollection = Process.GetProcesses();
     foreach (Process p in processCollection)
     {
