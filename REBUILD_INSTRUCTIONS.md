@@ -3,9 +3,46 @@
 ## Problem
 You're still getting the serialization error because the old DLLs are still being used. The project reference changes need to be built to take effect.
 
+## Build Permission Issues - FIXED
+
+If you were getting permission errors during build (related to `dotnet tool restore` or `husky install`), this has been fixed:
+
+**Changes made:**
+- Added `ContinueOnError="true"` to Husky install commands in `Core.csproj`
+- Added `/p:SkipHusky=true` parameter to skip Husky installation entirely
+- Replaced all `Exec` tasks with `Copy` tasks in `Directory.Build.targets`
+- Created automated build script (`build-etabs22.ps1`) that handles everything
+
+**You can now build without permission issues using either:**
+1. The automated build script (recommended)
+2. Manual builds with `/p:SkipHusky=true` flag
+
 ## Complete Rebuild Steps
 
-### 1. Clean Everything
+### Option A: Use the Build Script (RECOMMENDED)
+
+The easiest way is to use the provided PowerShell script:
+
+```powershell
+# In PowerShell, navigate to your solution root
+cd C:\Users\jjhaddad\source\repos\speckle-sharp-main
+
+# Run the build script
+.\build-etabs22.ps1
+```
+
+This script will:
+- Clean the solution
+- Remove all bin/obj folders
+- Clean the ETABS Plug-Ins folder
+- Build all projects in the correct order with the `/p:SkipHusky=true` flag
+- Verify that all critical DLLs were copied
+
+### Option B: Manual Build (If Permission Issues)
+
+If you're experiencing permission issues with `dotnet tool restore` or `husky install`, use the SkipHusky flag:
+
+#### 1. Clean Everything
 
 First, clean all old binaries and the ETABS Plug-Ins folder:
 
@@ -23,25 +60,25 @@ Get-ChildItem -Path . -Include bin,obj -Recurse -Directory | Remove-Item -Recurs
 Remove-Item "C:\ProgramData\Computers and Structures\ETABS 22\Plug-Ins\*.dll" -Force
 ```
 
-### 2. Build in Correct Order
+#### 2. Build in Correct Order with SkipHusky Flag
 
-Build the projects in dependency order:
+Build the projects in dependency order with the `/p:SkipHusky=true` flag to avoid permission issues:
 
 ```powershell
 # 1. Build Core
-dotnet build Core\Core\Core.csproj -c Debug
+dotnet build Core\Core\Core.csproj -c Debug /p:SkipHusky=true
 
 # 2. Build Objects
-dotnet build Objects\Objects\Objects.csproj -c Debug
+dotnet build Objects\Objects\Objects.csproj -c Debug /p:SkipHusky=true
 
 # 3. Build DesktopUI2
-dotnet build DesktopUI2\DesktopUI2\DesktopUI2.csproj -c Debug
+dotnet build DesktopUI2\DesktopUI2\DesktopUI2.csproj -c Debug /p:SkipHusky=true
 
 # 4. Build Converter ETABS22
-dotnet build Objects\Converters\ConverterCSI\ConverterETABS22\ConverterETABS22.csproj -c Debug
+dotnet build Objects\Converters\ConverterCSI\ConverterETABS22\ConverterETABS22.csproj -c Debug /p:SkipHusky=true
 
 # 5. Build Connector ETABS22
-dotnet build ConnectorCSI\ConnectorETABS22\ConnectorETABS22.csproj -c Debug
+dotnet build ConnectorCSI\ConnectorETABS22\ConnectorETABS22.csproj -c Debug /p:SkipHusky=true
 ```
 
 ### 3. Verify DLLs Were Copied

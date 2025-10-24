@@ -33,16 +33,25 @@
     AfterTargets="PostBuildEvent"
     Condition="'$(CopyToKitFolder)' == true AND '$(IsDesktopBuild)' == true">
     <Message Text="Copying $(AssemblyName).dll to $(KitFolder) Kit folder" Importance="high"/>
+
+    <!-- Windows: Use Copy task -->
     <MakeDir Condition="$([MSBuild]::IsOsPlatform('Windows'))"
          Directories="$(AppData)\Speckle\Kits\$(KitFolder)"/>
     <Copy Condition="$([MSBuild]::IsOsPlatform('Windows'))"
           SourceFiles="$(TargetDir)$(AssemblyName).dll"
           DestinationFolder="$(AppData)\Speckle\Kits\$(KitFolder)"
           SkipUnchangedFiles="false"/>
-    <Exec Condition="$([MSBuild]::IsOsPlatform('OSX'))"
-          Command="mkdir -p $HOME'/.config/Speckle/Kits/$(KitFolder)'"/>
-    <Exec Condition="$([MSBuild]::IsOsPlatform('OSX'))"
-          Command="cp '$(TargetDir)$(AssemblyName).dll' $HOME'/.config/Speckle/Kits/$(KitFolder)/'"/>
+
+    <!-- macOS: Use MakeDir and Copy tasks instead of Exec -->
+    <PropertyGroup Condition="$([MSBuild]::IsOsPlatform('OSX'))">
+      <MacKitFolder>$(HOME)/.config/Speckle/Kits/$(KitFolder)</MacKitFolder>
+    </PropertyGroup>
+    <MakeDir Condition="$([MSBuild]::IsOsPlatform('OSX'))"
+         Directories="$(MacKitFolder)"/>
+    <Copy Condition="$([MSBuild]::IsOsPlatform('OSX'))"
+          SourceFiles="$(TargetDir)$(AssemblyName).dll"
+          DestinationFolder="$(MacKitFolder)"
+          SkipUnchangedFiles="false"/>
   </Target>
 
   <!--
