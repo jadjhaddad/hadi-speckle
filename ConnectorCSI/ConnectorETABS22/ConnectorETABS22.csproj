@@ -1,0 +1,84 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <RootNamespace>SpeckleConnectorCSI</RootNamespace>
+    <AssemblyName>SpeckleConnectorCSI</AssemblyName>
+    <PlatformTarget>x64</PlatformTarget>
+    <DefineConstants>DEBUG;TRACE;ETABS;ETABS22</DefineConstants>
+    <OutputType>Library</OutputType>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+
+  <!-- Optional: Auto-launch ETABS 22 when debugging -->
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <StartAction>Program</StartAction>
+    <StartProgram>C:\Program Files\Computers and Structures\ETABS 22\ETABS.exe</StartProgram>
+  </PropertyGroup>
+
+  <!-- Optional: Automatically copy DLL to ETABS Plug-Ins folder after build -->
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <ItemGroup>
+      <DllsToCopy Include="$(TargetDir)*.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(DllsToCopy)" DestinationFolder="C:\ProgramData\Computers and Structures\ETABS 22\Plug-Ins\"/>
+  </Target>
+
+  <Import Project="..\ConnectorCSIShared\ConnectorCSIShared.projitems" Label="Shared" />
+
+  <ItemGroup>
+    <AvaloniaXaml Remove="Properties\**" />
+    <Compile Remove="Properties\**" />
+    <EmbeddedResource Remove="Properties\**" />
+    <None Remove="Properties\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- ETABS COM Reference -->
+    <Reference Include="ETABSv1">
+      <HintPath>..\..\..\..\..\..\..\Program Files\Computers and Structures\ETABS 22\ETABSv1.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Objects">
+      <HintPath>..\..\..\..\..\AppData\Roaming\Speckle\Kits\Objects\Objects.dll</HintPath>
+    </Reference>
+
+    <!-- System DLLs -->
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Numerics" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- External NuGet/Local Libraries -->
+    <Reference Include="NetTopologySuite">
+      <HintPath>..\..\packages\NetTopologySuite.2.5.0\lib\netstandard2.0\NetTopologySuite.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Buffers">
+      <HintPath>..\..\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Memory">
+      <HintPath>..\..\packages\System.Memory.4.5.4\lib\net461\System.Memory.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe">
+      <HintPath>..\..\packages\System.Runtime.CompilerServices.Unsafe.4.5.3\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Numerics.Vectors">
+      <HintPath>..\..\packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Speckle Project References -->
+    <ProjectReference Include="..\..\Core\Core\Core.csproj" />
+    <ProjectReference Include="..\..\DesktopUI2\DesktopUI2\DesktopUI2.csproj" />
+    <ProjectReference Include="..\..\Objects\Converters\StructuralUtilities\PolygonMesher\PolygonMesher.csproj" />
+  </ItemGroup>
+
+</Project>
