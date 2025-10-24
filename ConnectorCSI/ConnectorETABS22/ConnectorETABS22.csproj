@@ -16,7 +16,23 @@
     <StartProgram>C:\Program Files\Computers and Structures\ETABS 22\ETABS.exe</StartProgram>
   </PropertyGroup>
 
-  <!-- Optional: Automatically copy DLL to ETABS Plug-Ins folder after build -->
+  <!-- Copy converter DLL from converter's output to connector's bin folder -->
+  <Target Name="CopyConverterToConnectorBin" AfterTargets="Build">
+    <PropertyGroup>
+      <ConverterOutputPath>..\..\Objects\Converters\ConverterCSI\ConverterETABS22\bin\$(Configuration)\netstandard2.0\Objects.Converter.ETABS22.dll</ConverterOutputPath>
+    </PropertyGroup>
+    <Message Text="Copying converter from $(ConverterOutputPath) to $(TargetDir)" Importance="high"/>
+    <Copy
+      Condition="Exists('$(ConverterOutputPath)')"
+      SourceFiles="$(ConverterOutputPath)"
+      DestinationFolder="$(TargetDir)"
+      SkipUnchangedFiles="false"/>
+    <Warning
+      Condition="!Exists('$(ConverterOutputPath)')"
+      Text="Converter DLL not found at $(ConverterOutputPath). Build the converter first: dotnet build Objects\Converters\ConverterCSI\ConverterETABS22\ConverterETABS22.csproj"/>
+  </Target>
+
+  <!-- Automatically copy DLLs to ETABS Plug-Ins folder after build -->
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <ItemGroup>
       <DllsToCopy Include="$(TargetDir)*.dll" />

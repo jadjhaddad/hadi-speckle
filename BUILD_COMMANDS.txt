@@ -32,7 +32,15 @@ OR if using Command Prompt:
 del /q "C:\ProgramData\Computers and Structures\ETABS 22\Plug-Ins\*.dll"
 
 ----------------------------------------------------------------
-STEP 4: Build Core
+STEP 4: Clean AppData Kits folder (IMPORTANT - prevents old DLL loading)
+----------------------------------------------------------------
+Remove-Item "$env:APPDATA\Speckle\Kits\Objects\Objects.Converter.ETABS22.dll" -Force -ErrorAction SilentlyContinue
+
+OR if using Command Prompt:
+del /q "%APPDATA%\Speckle\Kits\Objects\Objects.Converter.ETABS22.dll"
+
+----------------------------------------------------------------
+STEP 5: Build Core
 ----------------------------------------------------------------
 dotnet build Core\Core\Core.csproj -c Debug /p:SkipHusky=true
 

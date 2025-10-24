@@ -31,7 +31,17 @@ if exist "%PLUGINS_FOLDER%" (
 )
 
 echo.
-echo Step 4: Building projects in dependency order...
+echo Step 4: Cleaning AppData Kits folder (to prevent old DLL loading)...
+set KITS_FOLDER=%APPDATA%\Speckle\Kits\Objects
+if exist "%KITS_FOLDER%" (
+    del /q "%KITS_FOLDER%\Objects.Converter.ETABS22.dll" 2>nul
+    echo   Cleaned old converter from: %KITS_FOLDER%
+) else (
+    echo   Kits folder not found (this is OK)
+)
+
+echo.
+echo Step 5: Building projects in dependency order...
 echo.
 
 echo   [1/5] Building Core...
@@ -75,7 +85,7 @@ if %errorlevel% neq 0 (
 )
 
 echo.
-echo Step 5: Verifying DLLs in ETABS Plug-Ins folder...
+echo Step 6: Verifying DLLs in ETABS Plug-Ins folder...
 if exist "%PLUGINS_FOLDER%" (
     echo.
     echo   DLLs in ETABS Plug-Ins folder:
