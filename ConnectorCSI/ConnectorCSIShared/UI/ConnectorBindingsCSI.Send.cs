@@ -59,6 +59,20 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
 #if ETABS22
     SpeckleLog.Logger.Information("🚧 Manually loading ObjectsKit and ETABS22 converter.");
 
+    // Log connector assembly location and its dependencies
+    var connectorAssembly = Assembly.GetExecutingAssembly();
+    SpeckleLog.Logger.Information("📍 Connector assembly location: {Location}", connectorAssembly.Location);
+
+    // Check which Objects assembly is loaded
+    var objectsAssembly = typeof(Objects.ObjectsKit).Assembly;
+    SpeckleLog.Logger.Information("📍 Objects assembly location: {Location}", objectsAssembly.Location);
+    SpeckleLog.Logger.Information("📍 Objects assembly version: {Version}", objectsAssembly.GetName().Version);
+
+    // Check which Core assembly is loaded
+    var coreAssembly = typeof(Speckle.Core.Models.Base).Assembly;
+    SpeckleLog.Logger.Information("📍 Core assembly location: {Location}", coreAssembly.Location);
+    SpeckleLog.Logger.Information("📍 Core assembly version: {Version}", coreAssembly.GetName().Version);
+
     var kit = new Objects.ObjectsKit();
     SpeckleLog.Logger.Information("✅ Loaded Objects Kit manually.");
 
@@ -76,7 +90,19 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
       throw new FileNotFoundException("❌ Could not find ETABS22 converter DLL", converterPath);
     }
 
-    var assembly = Assembly.LoadFrom(converterPath); // You can switch to Load(bytes) if needed
+    SpeckleLog.Logger.Information("📍 Loading converter from: {Path}", converterPath);
+    var assembly = Assembly.LoadFrom(converterPath);
+    SpeckleLog.Logger.Information("📍 Converter assembly version: {Version}", assembly.GetName().Version);
+
+    // Log converter's dependencies
+    foreach (var refAssembly in assembly.GetReferencedAssemblies())
+    {
+      if (refAssembly.Name.Contains("Objects") || refAssembly.Name.Contains("Core"))
+      {
+        SpeckleLog.Logger.Information("📍 Converter references: {Name} v{Version}", refAssembly.Name, refAssembly.Version);
+      }
+    }
+
     SpeckleLog.Logger.Information("🔍 Scanning loaded assembly for ISpeckleConverter implementations...");
 
     Type[] types;
@@ -332,7 +358,28 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
   {
     var commitObj = new Base();
     // Add model-level info if needed
-    commitObj["@Model"] = converter.ConvertToSpeckle(("Model", "CSI"));
+    var modelObj = converter.ConvertToSpeckle(("Model", "CSI"));
+
+    // Diagnostic logging for assembly mismatch debugging
+    if (modelObj != null)
+    {
+      Type modelType = ((object)modelObj).GetType();
+      SpeckleLog.Logger.Information("🔍 Model object type: {Type}", modelType.FullName);
+      SpeckleLog.Logger.Information("🔍 Model assembly: {Assembly}", modelType.Assembly.Location);
+      SpeckleLog.Logger.Information("🔍 Model assembly version: {Version}", modelType.Assembly.GetName().Version);
+      SpeckleLog.Logger.Information("🔍 Model is Base? {IsBase}", modelObj is Speckle.Core.Models.Base);
+
+      // Check the Base type from the serializer's perspective
+      var baseType = typeof(Speckle.Core.Models.Base);
+      SpeckleLog.Logger.Information("🔍 Expected Base type assembly: {Assembly}", baseType.Assembly.Location);
+      SpeckleLog.Logger.Information("🔍 Expected Base type version: {Version}", baseType.Assembly.GetName().Version);
+
+      // Check if types are assignable
+      bool isAssignable = baseType.IsAssignableFrom(modelType);
+      SpeckleLog.Logger.Information("🔍 Is Model assignable to Base? {IsAssignable}", isAssignable);
+    }
+
+    commitObj["@Model"] = modelObj;
 
     // Add converted objects to the commit
     commitObj["elements"] = objects;
