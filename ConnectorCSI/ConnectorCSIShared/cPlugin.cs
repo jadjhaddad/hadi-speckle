@@ -37,9 +37,22 @@ public class cPlugin
   {
     lock (_initLock)
     {
-      // Initialize Avalonia once
-      if (!_avaloniaInitialized)
+      // Log diagnostics about Application.Current state
+      SpeckleLog.Logger.Information("🔍 CreateOrFocusSpeckle called");
+      SpeckleLog.Logger.Information("🔍 Application.Current is null? {IsNull}", Application.Current == null);
+      SpeckleLog.Logger.Information("🔍 _avaloniaInitialized: {Initialized}", _avaloniaInitialized);
+      SpeckleLog.Logger.Information("🔍 MainWindow is null? {IsNull}", MainWindow == null);
+
+      if (Application.Current != null)
       {
+        SpeckleLog.Logger.Information("🔍 Application.Current type: {Type}", Application.Current.GetType().FullName);
+      }
+
+      // Initialize Avalonia once - BUT check if it's already initialized by another means
+      if (!_avaloniaInitialized && Application.Current == null)
+      {
+        SpeckleLog.Logger.Information("✅ Initializing Avalonia for the first time");
+
         // Build and initialize Avalonia on this thread
         var builder = AppBuilder
           .Configure<DesktopUI2.App>()
@@ -52,14 +65,24 @@ public class cPlugin
         // Initialize but don't start the main loop yet
         builder.SetupWithoutStarting();
         _avaloniaInitialized = true;
+
+        SpeckleLog.Logger.Information("✅ Avalonia initialized successfully");
+      }
+      else if (Application.Current != null)
+      {
+        SpeckleLog.Logger.Information("⚠️ Application.Current already exists - skipping initialization");
+        _avaloniaInitialized = true; // Mark as initialized even if we didn't do it
       }
 
       // If window exists and is visible, just focus it
       if (MainWindow != null && MainWindow.IsVisible)
       {
+        SpeckleLog.Logger.Information("📍 Window already exists and visible - focusing");
         MainWindow.Activate();
         return;
       }
+
+      SpeckleLog.Logger.Information("📍 Creating new MainWindow");
 
       // Create or recreate the window
       var viewModel = new MainViewModel(Bindings);
@@ -72,6 +95,8 @@ public class cPlugin
       MainWindow.Closed += SpeckleWindowClosed;
       MainWindow.Closing += SpeckleWindowClosed;
       MainWindow.Show();
+
+      SpeckleLog.Logger.Information("✅ MainWindow created and shown");
     }
   }
 
@@ -84,6 +109,15 @@ public class cPlugin
 
   private static void SpeckleWindowClosed(object sender, EventArgs e)
   {
+    SpeckleLog.Logger.Information("🚪 SpeckleWindowClosed called");
+    SpeckleLog.Logger.Information("🔍 Application.Current is null? {IsNull}", Application.Current == null);
+
+    if (Application.Current != null)
+    {
+      SpeckleLog.Logger.Information("🔍 Application.Current type: {Type}", Application.Current.GetType().FullName);
+      SpeckleLog.Logger.Information("🔍 Application.Current.Styles count: {Count}", Application.Current.Styles.Count);
+    }
+
     isSpeckleClosed = true;
 
     // Clean up window reference - it can be recreated
@@ -93,6 +127,8 @@ public class cPlugin
       MainWindow.Closing -= SpeckleWindowClosed;
       MainWindow = null;
     }
+
+    SpeckleLog.Logger.Information("✅ Window cleaned up - ready for next open");
 
     // Don't exit - just clean up the window
     // User can reopen the connector without restarting ETABS
