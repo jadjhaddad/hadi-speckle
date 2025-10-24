@@ -68,7 +68,11 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo   [4/5] Building ConverterETABS22...
+echo   [4/5] Building ConverterETABS22 (MUST be fresh for type identity)...
+echo         Cleaning converter bin folder first...
+if exist "Objects\Converters\ConverterCSI\ConverterETABS22\bin\Debug" (
+    rd /s /q "Objects\Converters\ConverterCSI\ConverterETABS22\bin\Debug"
+)
 dotnet build Objects\Converters\ConverterCSI\ConverterETABS22\ConverterETABS22.csproj -c Debug /p:SkipHusky=true --verbosity minimal
 if %errorlevel% neq 0 (
     echo     ERROR: ConverterETABS22 build failed!
@@ -76,7 +80,11 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo   [5/5] Building ConnectorETABS22...
+echo   [5/5] Building ConnectorETABS22 (will auto-copy fresh converter)...
+echo         Cleaning connector bin folder first...
+if exist "ConnectorCSI\ConnectorETABS22\bin\Debug" (
+    rd /s /q "ConnectorCSI\ConnectorETABS22\bin\Debug"
+)
 dotnet build ConnectorCSI\ConnectorETABS22\ConnectorETABS22.csproj -c Debug /p:SkipHusky=true --verbosity minimal
 if %errorlevel% neq 0 (
     echo     ERROR: ConnectorETABS22 build failed!
