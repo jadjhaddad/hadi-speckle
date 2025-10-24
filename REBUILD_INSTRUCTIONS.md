@@ -19,9 +19,24 @@ If you were getting permission errors during build (related to `dotnet tool rest
 
 ## Complete Rebuild Steps
 
-### Option A: Use the Build Script (RECOMMENDED)
+### Option A: Use the Batch File (EASIEST - NO PERMISSION ISSUES)
 
-The easiest way is to use the provided PowerShell script:
+Double-click the batch file to run it:
+
+1. Navigate to: `C:\Users\jjhaddad\source\repos\speckle-sharp-main`
+2. Double-click: `build-etabs22.bat`
+
+The batch file will:
+- Clean the solution
+- Remove all bin/obj folders
+- Clean the ETABS Plug-Ins folder
+- Build all projects in the correct order with the `/p:SkipHusky=true` flag
+- Verify that all critical DLLs were copied
+- Show progress and errors (if any)
+
+**This works without any execution policy restrictions!**
+
+### Option B: Use the PowerShell Script (If you can run scripts)
 
 ```powershell
 # In PowerShell, navigate to your solution root
@@ -31,14 +46,11 @@ cd C:\Users\jjhaddad\source\repos\speckle-sharp-main
 .\build-etabs22.ps1
 ```
 
-This script will:
-- Clean the solution
-- Remove all bin/obj folders
-- Clean the ETABS Plug-Ins folder
-- Build all projects in the correct order with the `/p:SkipHusky=true` flag
-- Verify that all critical DLLs were copied
+### Option C: Copy-Paste Commands One by One
 
-### Option B: Manual Build (If Permission Issues)
+If you can't run scripts at all, open `BUILD_COMMANDS.txt` and copy-paste each command one by one into PowerShell or Command Prompt.
+
+### Option D: Manual Build (Full Control)
 
 If you're experiencing permission issues with `dotnet tool restore` or `husky install`, use the SkipHusky flag:
 
