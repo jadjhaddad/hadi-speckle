@@ -30,8 +30,7 @@ public class cPlugin
 
   public static ConnectorBindingsCSI Bindings { get; set; }
 
-  private static System.Threading.Thread _avaloniaThread;
-  private static bool _avaloniaInitialized = false;
+  private static bool _hasBeenClosed = false;
 
   public static AppBuilder BuildAvaloniaApp() =>
     AppBuilder
@@ -44,43 +43,50 @@ public class cPlugin
 
   public static void CreateOrFocusSpeckle()
   {
-    if (!_avaloniaInitialized)
+    // If connector was previously closed, don't allow reopening
+    if (_hasBeenClosed)
     {
-      // Start Avalonia on a separate thread
-      _avaloniaThread = new System.Threading.Thread(() =>
+      var errorWindow = new Window
       {
-        BuildAvaloniaApp().StartWithClassicDesktopLifetime(new string[0], Avalonia.Controls.ShutdownMode.OnExplicitShutdown);
-      });
-      _avaloniaThread.SetApartmentState(System.Threading.ApartmentState.STA);
-      _avaloniaThread.Start();
-
-      // Wait for Avalonia to initialize
-      System.Threading.SpinWait.SpinUntil(() => Application.Current != null, 5000);
-      _avaloniaInitialized = true;
+        Title = "Speckle Connector",
+        Width = 400,
+        Height = 150,
+        WindowStartupLocation = WindowStartupLocation.CenterScreen,
+        Content = new Avalonia.Controls.TextBlock
+        {
+          Text = "The Speckle connector cannot be reopened after closing.\n\nPlease restart ETABS to use the connector again.",
+          TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+          Margin = new Avalonia.Thickness(20),
+          VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+        }
+      };
+      errorWindow.ShowDialog(MainWindow);
+      return;
     }
 
-    // Create/show window on UI thread
-    Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+    if (MainWindow == null)
     {
-      if (MainWindow == null || !MainWindow.IsVisible)
-      {
-        var viewModel = new MainViewModel(Bindings);
+      BuildAvaloniaApp().Start(AppMain, null);
+    }
+    else
+    {
+      MainWindow.Show();
+      MainWindow.Activate();
+    }
+  }
 
-        var streams = Bindings.GetStreamsInFile();
-        streams = streams ?? new List<DesktopUI2.Models.StreamState>();
-        Bindings.UpdateSavedStreams?.Invoke(streams);
+  private static void AppMain(Application app, string[] args)
+  {
+    var viewModel = new MainViewModel(Bindings);
 
-        MainWindow = new MainWindow { DataContext = viewModel };
-        MainWindow.Closed += SpeckleWindowClosed;
-        MainWindow.Closing += SpeckleWindowClosed;
-        MainWindow.Show();
-      }
-      else
-      {
-        MainWindow.Show();
-        MainWindow.Activate();
-      }
-    });
+    var streams = Bindings.GetStreamsInFile();
+    streams = streams ?? new List<DesktopUI2.Models.StreamState>();
+    Bindings.UpdateSavedStreams?.Invoke(streams);
+
+    MainWindow = new MainWindow { DataContext = viewModel };
+    MainWindow.Closed += SpeckleWindowClosed;
+    MainWindow.Closing += SpeckleWindowClosed;
+    app.Run(MainWindow);
   }
 
   public static void OpenOrFocusSpeckle(cSapModel model)
@@ -93,17 +99,15 @@ public class cPlugin
   private static void SpeckleWindowClosed(object sender, EventArgs e)
   {
     isSpeckleClosed = true;
+    _hasBeenClosed = true; // Mark that connector has been closed
 
-    // Clean up window reference so it can be recreated
+    // Clean up window reference
     if (MainWindow != null)
     {
       MainWindow.Closed -= SpeckleWindowClosed;
       MainWindow.Closing -= SpeckleWindowClosed;
       MainWindow = null;
     }
-
-    // Don't shutdown Avalonia - just clean up the window
-    // Avalonia will stay running in the background ready for next open
 
     Process[] processCollection = Process.GetProcesses();
     foreach (Process p in processCollection)
