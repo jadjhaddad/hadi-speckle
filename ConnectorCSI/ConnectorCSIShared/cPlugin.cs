@@ -130,8 +130,11 @@ public class cPlugin
 
     SpeckleLog.Logger.Information("✅ Window cleaned up - ready for next open");
 
-    // Don't exit - just clean up the window
-    // User can reopen the connector without restarting ETABS
+    // DON'T call pluginCallback.Finish(0) here!
+    // That unloads the entire plugin and destroys Application.Current
+    // Just clean up the window and leave the plugin loaded so it can be reopened
+
+    // Only exit if we're in the standalone driver process
     Process[] processCollection = Process.GetProcesses();
     foreach (Process p in processCollection)
     {
@@ -141,7 +144,8 @@ public class cPlugin
       }
     }
 
-    pluginCallback.Finish(0);
+    // Removed: pluginCallback.Finish(0);
+    // This was causing ETABS to unload the plugin DLL, destroying all static state
   }
 
   public int Info(ref string Text)
