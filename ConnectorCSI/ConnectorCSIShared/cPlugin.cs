@@ -30,6 +30,9 @@ public class cPlugin
 
   public static ConnectorBindingsCSI Bindings { get; set; }
 
+  private static System.Threading.Thread _avaloniaThread;
+  private static bool _avaloniaInitialized = false;
+
   public static AppBuilder BuildAvaloniaApp() =>
     AppBuilder
       .Configure<DesktopUI2.App>()
@@ -41,47 +44,43 @@ public class cPlugin
 
   public static void CreateOrFocusSpeckle()
   {
-    // Check if Avalonia is already initialized
-    if (Application.Current == null)
+    if (!_avaloniaInitialized)
     {
-      // First time - initialize Avalonia
-      BuildAvaloniaApp().Start(AppMain, null);
+      // Start Avalonia on a separate thread
+      _avaloniaThread = new System.Threading.Thread(() =>
+      {
+        BuildAvaloniaApp().StartWithClassicDesktopLifetime(new string[0], Avalonia.Controls.ShutdownMode.OnExplicitShutdown);
+      });
+      _avaloniaThread.SetApartmentState(System.Threading.ApartmentState.STA);
+      _avaloniaThread.Start();
+
+      // Wait for Avalonia to initialize
+      System.Threading.SpinWait.SpinUntil(() => Application.Current != null, 5000);
+      _avaloniaInitialized = true;
     }
-    else if (MainWindow == null || !MainWindow.IsVisible)
+
+    // Create/show window on UI thread
+    Avalonia.Threading.Dispatcher.UIThread.Post(() =>
     {
-      // Avalonia already initialized, just recreate the window
-      var viewModel = new MainViewModel(Bindings);
+      if (MainWindow == null || !MainWindow.IsVisible)
+      {
+        var viewModel = new MainViewModel(Bindings);
 
-      var streams = Bindings.GetStreamsInFile();
-      streams = streams ?? new List<DesktopUI2.Models.StreamState>();
-      Bindings.UpdateSavedStreams?.Invoke(streams);
+        var streams = Bindings.GetStreamsInFile();
+        streams = streams ?? new List<DesktopUI2.Models.StreamState>();
+        Bindings.UpdateSavedStreams?.Invoke(streams);
 
-      MainWindow = new MainWindow { DataContext = viewModel };
-      MainWindow.Closed += SpeckleWindowClosed;
-      MainWindow.Closing += SpeckleWindowClosed;
-      MainWindow.Show();
-    }
-    else
-    {
-      // Window already exists and is visible - just focus it
-      MainWindow.Show();
-      MainWindow.Activate();
-    }
-  }
-
-  private static void AppMain(Application app, string[] args)
-  {
-    var viewModel = new MainViewModel(Bindings);
-
-    var streams = Bindings.GetStreamsInFile();
-    streams = streams ?? new List<DesktopUI2.Models.StreamState>();
-    Bindings.UpdateSavedStreams?.Invoke(streams);
-
-    MainWindow = new MainWindow { DataContext = viewModel };
-    MainWindow.Closed += SpeckleWindowClosed;
-    MainWindow.Closing += SpeckleWindowClosed;
-    app.Run(MainWindow);
-    //Task.Run(() => app.Run(MainWindow));
+        MainWindow = new MainWindow { DataContext = viewModel };
+        MainWindow.Closed += SpeckleWindowClosed;
+        MainWindow.Closing += SpeckleWindowClosed;
+        MainWindow.Show();
+      }
+      else
+      {
+        MainWindow.Show();
+        MainWindow.Activate();
+      }
+    });
   }
 
   public static void OpenOrFocusSpeckle(cSapModel model)
@@ -103,6 +102,9 @@ public class cPlugin
       MainWindow = null;
     }
 
+    // Don't shutdown Avalonia - just clean up the window
+    // Avalonia will stay running in the background ready for next open
+
     Process[] processCollection = Process.GetProcesses();
     foreach (Process p in processCollection)
     {
@@ -111,7 +113,7 @@ public class cPlugin
         Environment.Exit(0);
       }
     }
-    //Environment.Exit(0);
+
     pluginCallback.Finish(0);
   }
 
