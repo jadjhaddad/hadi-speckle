@@ -173,12 +173,14 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
 
         if (conversionResult.CreatedIds != null && conversionResult.CreatedIds.Any())
         {
-          progress.Report.Log($"✅ Created IDs: {string.Join(", ", conversionResult.CreatedIds)}");
+          var idStrings = conversionResult.CreatedIds.Select(id => id?.ToString() ?? "null");
+          progress.Report.Log($"✅ Created IDs: {string.Join(", ", idStrings)}");
         }
 
         if (conversionResult.Converted != null && conversionResult.Converted.Any())
         {
-          progress.Report.Log($"✅ Converted objects: {string.Join(", ", conversionResult.Converted)}");
+          var convertedStrings = conversionResult.Converted.Select(c => c?.ToString() ?? "null");
+          progress.Report.Log($"✅ Converted objects: {string.Join(", ", convertedStrings)}");
         }
 
         if (!string.IsNullOrEmpty(conversionResult.Log))
