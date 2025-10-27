@@ -35,9 +35,21 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
   {
     Exceptions.Clear();
 
+#if ETABS22
+    SpeckleLog.Logger.Information("✅ Using direct converter reference for ETABS22 receive");
+
+    // Direct instantiation - no assembly loading, preserves type identity
+    var converter = new Objects.Converter.CSI.ConverterCSI();
+
+    SpeckleLog.Logger.Information("✅ Created ConverterCSI instance for receive");
+    SpeckleLog.Logger.Information("🔍 Converter type: {Type}", converter.GetType().FullName);
+#else
+    SpeckleLog.Logger.Information("✅ Using default kit manager for receive");
     var kit = KitManager.GetDefaultKit();
     var appName = GetHostAppVersion(Model);
     ISpeckleConverter converter = kit.LoadConverter(appName);
+    SpeckleLog.Logger.Information("✅ Loaded converter: {Type}", converter.GetType().FullName);
+#endif
 
     // set converter settings as tuples (setting slug, setting selection)
     // for csi, these must go before the SetContextDocument method.
