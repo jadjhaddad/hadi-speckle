@@ -106,8 +106,8 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
     DeleteObjects(previouslyReceivedObjects, newPlaceholderObjects, progress);
 
     // The following block of code is a hack to properly refresh the view
-    // I've only experienced this bug in ETABS so far
-#if ETABS
+    // This bug exists in both ETABS and ETABS22
+#if ETABS || ETABS22
     if (newPlaceholderObjects.Any(o => o.Status == ApplicationObject.State.Updated))
     {
       RefreshDatabaseTable("Beam Object Connectivity");
