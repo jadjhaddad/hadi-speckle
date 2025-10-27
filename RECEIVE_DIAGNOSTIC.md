@@ -154,47 +154,39 @@ System.InvalidOperationException: Sequence contains no matching element
 4. Rebuild: `build-etabs22.bat`
 5. Restart ETABS
 
-### Issue: Line Conversion Failures
+### Issue: Line Conversion Failures - RESOLVED
+**Root Cause:** LineToNative was missing the required section property parameter in AddByCoord call.
+
 **Symptoms:**
 ```
 🔍 LineToNative called:
-   Start: (0, 0, 0) m
-   End: (10, 0, 0) m
-   Model units: kip_ft_F
-   Conversion factors: start=3.28084, end=3.28084
-   Converted start: (0, 0, 0)
-   Converted end: (32.8084, 0, 0)
-   API result: success=X, frame=
+   Start: (0, 0, 8.624620826666666) mm
+   End: (3.107, 0, 8.624666666666666) mm
+   Model units: inch
+   Converted start: (0, 0, 0.33955218440794926)
+   Converted end: (0.1223229007, 0, 0.3395539891333333)
+   Frame length: 0.122323 inch
+   API result: success=1, frame=
 ```
 
-Where success is non-zero (error code).
+**Analysis:**
+- Error code 1 = Invalid operation
+- Frame length (0.122 inches) is valid - not too short
+- Coordinates are valid - no NaN or Infinity
+- **Issue**: AddByCoord was called with 7 parameters, but ETABS requires 8 parameters including section property type
 
-**What to check:**
-1. **Error code**: What specific error is ETABS returning?
-   - 1 = Invalid coordinates or duplicate frame
-   - 2 = Model locked or not initialized
-   - Other codes = Check ETABS API documentation
+**Fix Applied:**
+Changed from:
+```csharp
+Model.FrameObj.AddByCoord(x1, y1, z1, x2, y2, z2, ref newFrame);
+```
 
-2. **Coordinates**: Are the converted coordinates valid?
-   - Check for NaN or Infinity values
-   - Check if coordinates are within model bounds
-   - Check if start and end are identical (zero-length frame)
+To:
+```csharp
+Model.FrameObj.AddByCoord(x1, y1, z1, x2, y2, z2, ref newFrame, "Default");
+```
 
-3. **Units**: Are conversion factors reasonable?
-   - Meters to feet should be ~3.28084
-   - If factor is 1.0, units might already match
-   - If factor is very large or small, unit string might be incorrect
-
-4. **Model state**: Is ETABS in the right state?
-   - Model might need to be unlocked
-   - Some operations require saving first
-   - Check if SetModelIsLocked(false) is needed
-
-**Possible Solutions:**
-- If coordinates are invalid: Check source data in Speckle
-- If units are wrong: Verify Line.start.units and Line.end.units values
-- If model is locked: Add unlock call before frame creation
-- If error code is 1: Check for duplicate frames or invalid geometry
+This matches the pattern used in ConvertFrame.cs (CreateFrame method). ETABS requires a section property to be specified - using "Default" tells ETABS to assign the default frame section property to the new frame.
 
 ## Next Steps
 
