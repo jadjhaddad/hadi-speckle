@@ -183,9 +183,9 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
           progress.Report.Log($"✅ Converted objects: {string.Join(", ", convertedStrings)}");
         }
 
-        if (!string.IsNullOrEmpty(conversionResult.Log))
+        if (conversionResult.Log != null && conversionResult.Log.Any())
         {
-          progress.Report.Log($"📝 Conversion log: {conversionResult.Log}");
+          progress.Report.Log($"📝 Conversion log: {string.Join(", ", conversionResult.Log)}");
         }
 
         var finalStatus =
