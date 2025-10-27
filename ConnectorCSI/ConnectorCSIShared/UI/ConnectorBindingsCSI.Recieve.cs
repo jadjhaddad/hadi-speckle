@@ -157,12 +157,18 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
     {
       if (!StoredObjects.ContainsKey(obj.OriginalId))
       {
+        SpeckleLog.Logger.Warning("⚠️ Object not in StoredObjects: {Id}", obj.OriginalId);
         continue;
       }
 
       progress.CancellationToken.ThrowIfCancellationRequested();
 
       var @base = StoredObjects[obj.OriginalId];
+
+      SpeckleLog.Logger.Information("🔹 Converting object:");
+      SpeckleLog.Logger.Information("   Type: {Type}", @base.speckle_type);
+      SpeckleLog.Logger.Information("   ID: {Id}", @base.id);
+
       progress.Report.Log($"🔹 Type: {@base.speckle_type} | ID: {@base.id}");
 
       if (@base is Element2D e2d)
@@ -181,7 +187,10 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
         {
           progress.Report.Log($"🧱 Element2D detected: {elem.name}");
         }
+
+        SpeckleLog.Logger.Information("⏳ Calling converter.ConvertToNative()...");
         var conversionResult = (ApplicationObject)converter.ConvertToNative(@base);
+        SpeckleLog.Logger.Information("✅ ConvertToNative() returned");
 
         SpeckleLog.Logger.Information("🔍 Conversion result - Status: {Status}", conversionResult.Status);
         SpeckleLog.Logger.Information("🔍 Created IDs count: {Count}", conversionResult.CreatedIds?.Count ?? 0);
