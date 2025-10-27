@@ -63,6 +63,9 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
     converter.SetConverterSettings(settings);
 
     converter.SetContextDocument(Model);
+
+    SpeckleLog.Logger.Information("🚀 DIAGNOSTIC CODE ACTIVE - Enhanced logging enabled (commit f601254)");
+
     Exceptions.Clear();
     var previouslyReceivedObjects = state.ReceivedObjects;
 
