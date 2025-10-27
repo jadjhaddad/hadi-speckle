@@ -9,7 +9,8 @@ public partial class ConverterCSI
 {
   // ETABS minimum frame length tolerance (in model units)
   // Frames shorter than this will be skipped to avoid API errors
-  private const double MIN_FRAME_LENGTH_TOLERANCE = 0.01; // 0.01 inches, feet, meters, etc.
+  // Based on ETABS numerical precision - typically rejects frames < 0.1 inches
+  private const double MIN_FRAME_LENGTH_TOLERANCE = 0.1; // 0.1 inches, feet, meters, etc.
 
   public string LineToNative(Line line)
   {
@@ -55,7 +56,9 @@ public partial class ConverterCSI
       throw new ConversionException(message);
     }
 
-    var success = Model.FrameObj.AddByCoord(x1, y1, z1, x2, y2, z2, ref newFrame);
+    // Add frame with "Default" section property type
+    // ETABS requires a section property to be specified
+    var success = Model.FrameObj.AddByCoord(x1, y1, z1, x2, y2, z2, ref newFrame, "Default");
 
     SpeckleLog.Logger.Information("   API result: success={Code}, frame={Name}", success, newFrame);
 
