@@ -84,6 +84,7 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
     //Execute.PostToUIThread(() => state.Progress.Maximum = state.SelectedObjectIds.Count());
 
     Preview = FlattenCommitObject(commitObject, converter, msg => progress.Report.Log(msg));
+    SpeckleLog.Logger.Information("🔍 Objects returned by traversal: {Count}", Preview.Count);
     progress.Report.Log($"🔍 Objects returned by traversal: {Preview.Count}");
     foreach (var previewObj in Preview)
     {
@@ -106,6 +107,13 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
 
     var newPlaceholderObjects = ConvertReceivedObjects(converter, progress);
 
+    SpeckleLog.Logger.Information("📊 Conversion Summary:");
+    SpeckleLog.Logger.Information("   Total objects processed: {Count}", newPlaceholderObjects.Count);
+    SpeckleLog.Logger.Information("   Created: {Count}", newPlaceholderObjects.Count(o => o.Status == ApplicationObject.State.Created));
+    SpeckleLog.Logger.Information("   Updated: {Count}", newPlaceholderObjects.Count(o => o.Status == ApplicationObject.State.Updated));
+    SpeckleLog.Logger.Information("   Failed: {Count}", newPlaceholderObjects.Count(o => o.Status == ApplicationObject.State.Failed));
+    SpeckleLog.Logger.Information("   Skipped: {Count}", newPlaceholderObjects.Count(o => o.Status == ApplicationObject.State.Skipped));
+
     progress.Report.Log($"📊 Conversion Summary:");
     progress.Report.Log($"   Total objects processed: {newPlaceholderObjects.Count}");
     progress.Report.Log($"   Created: {newPlaceholderObjects.Count(o => o.Status == ApplicationObject.State.Created)}");
@@ -120,14 +128,17 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
 #if ETABS || ETABS22
     if (newPlaceholderObjects.Any(o => o.Status == ApplicationObject.State.Updated))
     {
+      SpeckleLog.Logger.Information("🔄 Refreshing database table for updated objects");
       progress.Report.Log($"🔄 Refreshing database table for updated objects");
       RefreshDatabaseTable("Beam Object Connectivity");
     }
 #endif
 
+    SpeckleLog.Logger.Information("🔄 Refreshing ETABS view (RefreshWindow + RefreshView)");
     progress.Report.Log($"🔄 Refreshing ETABS view (RefreshWindow + RefreshView)");
     Model.View.RefreshWindow();
     Model.View.RefreshView();
+    SpeckleLog.Logger.Information("✅ View refresh completed");
     progress.Report.Log($"✅ View refresh completed");
 
     state.ReceivedObjects = newPlaceholderObjects;
@@ -139,6 +150,8 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
   {
     List<ApplicationObject> conversionResults = new();
     ConcurrentDictionary<string, int> conversionProgressDict = new() { ["Conversion"] = 1 };
+
+    SpeckleLog.Logger.Information("🔄 Starting conversion of {Count} objects", Preview.Count);
 
     foreach (var obj in Preview)
     {
@@ -170,6 +183,10 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
         }
         var conversionResult = (ApplicationObject)converter.ConvertToNative(@base);
 
+        SpeckleLog.Logger.Information("🔍 Conversion result - Status: {Status}", conversionResult.Status);
+        SpeckleLog.Logger.Information("🔍 Created IDs count: {Count}", conversionResult.CreatedIds?.Count ?? 0);
+        SpeckleLog.Logger.Information("🔍 Converted count: {Count}", conversionResult.Converted?.Count ?? 0);
+
         progress.Report.Log($"🔍 Conversion result - Status: {conversionResult.Status}");
         progress.Report.Log($"🔍 Created IDs count: {conversionResult.CreatedIds?.Count ?? 0}");
         progress.Report.Log($"🔍 Converted count: {conversionResult.Converted?.Count ?? 0}");
@@ -177,17 +194,20 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
         if (conversionResult.CreatedIds != null && conversionResult.CreatedIds.Any())
         {
           var idStrings = conversionResult.CreatedIds.Select(id => id?.ToString() ?? "null");
+          SpeckleLog.Logger.Information("✅ Created IDs: {Ids}", string.Join(", ", idStrings));
           progress.Report.Log($"✅ Created IDs: {string.Join(", ", idStrings)}");
         }
 
         if (conversionResult.Converted != null && conversionResult.Converted.Any())
         {
           var convertedStrings = conversionResult.Converted.Select(c => c?.ToString() ?? "null");
+          SpeckleLog.Logger.Information("✅ Converted objects: {Objects}", string.Join(", ", convertedStrings));
           progress.Report.Log($"✅ Converted objects: {string.Join(", ", convertedStrings)}");
         }
 
         if (conversionResult.Log != null && conversionResult.Log.Any())
         {
+          SpeckleLog.Logger.Information("📝 Conversion log: {Log}", string.Join(", ", conversionResult.Log));
           progress.Report.Log($"📝 Conversion log: {string.Join(", ", conversionResult.Log)}");
         }
 
@@ -196,6 +216,7 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
             ? conversionResult.Status
             : ApplicationObject.State.Created;
 
+        SpeckleLog.Logger.Information("📊 Final status: {Status}", finalStatus);
         progress.Report.Log($"📊 Final status: {finalStatus}");
 
         obj.Update(
