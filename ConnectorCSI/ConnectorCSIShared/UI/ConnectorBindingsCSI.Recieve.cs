@@ -43,6 +43,11 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
 
     SpeckleLog.Logger.Information("✅ Created ConverterCSI instance for receive");
     SpeckleLog.Logger.Information("🔍 Converter type: {Type}", converter.GetType().FullName);
+
+    // Force load the Objects assembly to ensure types are available for deserialization
+    var objectsAssembly = typeof(Objects.Structural.Geometry.Element1D).Assembly;
+    SpeckleLog.Logger.Information("🔍 Objects assembly loaded: {Assembly}", objectsAssembly.FullName);
+    SpeckleLog.Logger.Information("🔍 Objects assembly location: {Location}", objectsAssembly.Location);
 #else
     SpeckleLog.Logger.Information("✅ Using default kit manager for receive");
     var kit = KitManager.GetDefaultKit();
@@ -153,6 +158,7 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
 
     SpeckleLog.Logger.Information("🔄 Starting conversion of {Count} objects", Preview.Count);
 
+    int objectIndex = 0;
     foreach (var obj in Preview)
     {
       if (!StoredObjects.ContainsKey(obj.OriginalId))
@@ -165,11 +171,18 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
 
       var @base = StoredObjects[obj.OriginalId];
 
-      SpeckleLog.Logger.Information("🔹 Converting object:");
-      SpeckleLog.Logger.Information("   Type: {Type}", @base.speckle_type);
-      SpeckleLog.Logger.Information("   ID: {Id}", @base.id);
+      // Log details for first 3 objects to avoid log spam
+      if (objectIndex < 3)
+      {
+        SpeckleLog.Logger.Information("🔹 Converting object #{Index}:", objectIndex);
+        SpeckleLog.Logger.Information("   speckle_type: {SpeckleType}", @base.speckle_type);
+        SpeckleLog.Logger.Information("   .NET Type: {DotNetType}", @base.GetType().FullName);
+        SpeckleLog.Logger.Information("   ID: {Id}", @base.id);
+      }
 
       progress.Report.Log($"🔹 Type: {@base.speckle_type} | ID: {@base.id}");
+
+      objectIndex++;
 
       if (@base is Element2D e2d)
       {
@@ -188,13 +201,39 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
           progress.Report.Log($"🧱 Element2D detected: {elem.name}");
         }
 
-        SpeckleLog.Logger.Information("⏳ Calling converter.ConvertToNative()...");
+        if (objectIndex - 1 < 3)
+        {
+          SpeckleLog.Logger.Information("⏳ Calling converter.ConvertToNative()...");
+        }
         var conversionResult = (ApplicationObject)converter.ConvertToNative(@base);
-        SpeckleLog.Logger.Information("✅ ConvertToNative() returned");
+        if (objectIndex - 1 < 3)
+        {
+          SpeckleLog.Logger.Information("✅ ConvertToNative() returned");
+        }
 
-        SpeckleLog.Logger.Information("🔍 Conversion result - Status: {Status}", conversionResult.Status);
-        SpeckleLog.Logger.Information("🔍 Created IDs count: {Count}", conversionResult.CreatedIds?.Count ?? 0);
-        SpeckleLog.Logger.Information("🔍 Converted count: {Count}", conversionResult.Converted?.Count ?? 0);
+        if (objectIndex - 1 < 3)
+        {
+          SpeckleLog.Logger.Information("🔍 Conversion result - Status: {Status}", conversionResult.Status);
+          SpeckleLog.Logger.Information("🔍 Created IDs count: {Count}", conversionResult.CreatedIds?.Count ?? 0);
+          SpeckleLog.Logger.Information("🔍 Converted count: {Count}", conversionResult.Converted?.Count ?? 0);
+
+          if (conversionResult.CreatedIds != null && conversionResult.CreatedIds.Any())
+          {
+            var idStrings = conversionResult.CreatedIds.Select(id => id?.ToString() ?? "null");
+            SpeckleLog.Logger.Information("✅ Created IDs: {Ids}", string.Join(", ", idStrings));
+          }
+
+          if (conversionResult.Converted != null && conversionResult.Converted.Any())
+          {
+            var convertedStrings = conversionResult.Converted.Select(c => c?.ToString() ?? "null");
+            SpeckleLog.Logger.Information("✅ Converted objects: {Objects}", string.Join(", ", convertedStrings));
+          }
+
+          if (conversionResult.Log != null && conversionResult.Log.Any())
+          {
+            SpeckleLog.Logger.Information("📝 Conversion log: {Log}", string.Join(", ", conversionResult.Log));
+          }
+        }
 
         progress.Report.Log($"🔍 Conversion result - Status: {conversionResult.Status}");
         progress.Report.Log($"🔍 Created IDs count: {conversionResult.CreatedIds?.Count ?? 0}");
@@ -203,20 +242,17 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
         if (conversionResult.CreatedIds != null && conversionResult.CreatedIds.Any())
         {
           var idStrings = conversionResult.CreatedIds.Select(id => id?.ToString() ?? "null");
-          SpeckleLog.Logger.Information("✅ Created IDs: {Ids}", string.Join(", ", idStrings));
           progress.Report.Log($"✅ Created IDs: {string.Join(", ", idStrings)}");
         }
 
         if (conversionResult.Converted != null && conversionResult.Converted.Any())
         {
           var convertedStrings = conversionResult.Converted.Select(c => c?.ToString() ?? "null");
-          SpeckleLog.Logger.Information("✅ Converted objects: {Objects}", string.Join(", ", convertedStrings));
           progress.Report.Log($"✅ Converted objects: {string.Join(", ", convertedStrings)}");
         }
 
         if (conversionResult.Log != null && conversionResult.Log.Any())
         {
-          SpeckleLog.Logger.Information("📝 Conversion log: {Log}", string.Join(", ", conversionResult.Log));
           progress.Report.Log($"📝 Conversion log: {string.Join(", ", conversionResult.Log)}");
         }
 
@@ -225,7 +261,10 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
             ? conversionResult.Status
             : ApplicationObject.State.Created;
 
-        SpeckleLog.Logger.Information("📊 Final status: {Status}", finalStatus);
+        if (objectIndex - 1 < 3)
+        {
+          SpeckleLog.Logger.Information("📊 Final status: {Status}", finalStatus);
+        }
         progress.Report.Log($"📊 Final status: {finalStatus}");
 
         obj.Update(
