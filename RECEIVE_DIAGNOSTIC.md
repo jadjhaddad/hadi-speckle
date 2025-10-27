@@ -154,6 +154,48 @@ System.InvalidOperationException: Sequence contains no matching element
 4. Rebuild: `build-etabs22.bat`
 5. Restart ETABS
 
+### Issue: Line Conversion Failures
+**Symptoms:**
+```
+🔍 LineToNative called:
+   Start: (0, 0, 0) m
+   End: (10, 0, 0) m
+   Model units: kip_ft_F
+   Conversion factors: start=3.28084, end=3.28084
+   Converted start: (0, 0, 0)
+   Converted end: (32.8084, 0, 0)
+   API result: success=X, frame=
+```
+
+Where success is non-zero (error code).
+
+**What to check:**
+1. **Error code**: What specific error is ETABS returning?
+   - 1 = Invalid coordinates or duplicate frame
+   - 2 = Model locked or not initialized
+   - Other codes = Check ETABS API documentation
+
+2. **Coordinates**: Are the converted coordinates valid?
+   - Check for NaN or Infinity values
+   - Check if coordinates are within model bounds
+   - Check if start and end are identical (zero-length frame)
+
+3. **Units**: Are conversion factors reasonable?
+   - Meters to feet should be ~3.28084
+   - If factor is 1.0, units might already match
+   - If factor is very large or small, unit string might be incorrect
+
+4. **Model state**: Is ETABS in the right state?
+   - Model might need to be unlocked
+   - Some operations require saving first
+   - Check if SetModelIsLocked(false) is needed
+
+**Possible Solutions:**
+- If coordinates are invalid: Check source data in Speckle
+- If units are wrong: Verify Line.start.units and Line.end.units values
+- If model is locked: Add unlock call before frame creation
+- If error code is 1: Check for duplicate frames or invalid geometry
+
 ## Next Steps
 
 After running receive with the new diagnostics, share the full log output. The enhanced logging will help identify exactly where the process is failing:
@@ -163,5 +205,6 @@ After running receive with the new diagnostics, share the full log output. The e
 3. Is the conversion succeeding?
 4. Are objects being created in the ETABS API?
 5. Is the view refresh working?
+6. **For Line objects**: What error code and coordinates are being logged?
 
 With this information, we can pinpoint the exact issue and apply the right fix.
