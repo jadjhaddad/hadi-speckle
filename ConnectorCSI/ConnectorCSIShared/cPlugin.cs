@@ -83,17 +83,34 @@ public class cPlugin
         }
       }
 
-      // If window exists and is visible, just focus it
-      if (MainWindow != null && MainWindow.IsVisible)
+      // If window exists, show it (whether visible or hidden)
+      if (MainWindow != null)
       {
-        SpeckleLog.Logger.Information("📍 Window already exists and visible - focusing");
-        MainWindow.Activate();
+        if (MainWindow.IsVisible)
+        {
+          SpeckleLog.Logger.Information("📍 Window already visible - focusing");
+          MainWindow.Activate();
+        }
+        else
+        {
+          SpeckleLog.Logger.Information("📍 Window exists but hidden - showing it");
+          // Refresh the data in case streams changed
+          if (MainWindow.DataContext is MainViewModel vm)
+          {
+            var streams = Bindings.GetStreamsInFile();
+            streams = streams ?? new List<DesktopUI2.Models.StreamState>();
+            Bindings.UpdateSavedStreams?.Invoke(streams);
+          }
+          MainWindow.Show();
+          MainWindow.Activate();
+          SpeckleLog.Logger.Information("✅ MainWindow shown");
+        }
         return;
       }
 
       SpeckleLog.Logger.Information("📍 Creating new MainWindow");
 
-      // Create or recreate the window
+      // Create the window for the first time
       var viewModel = new MainViewModel(Bindings);
 
       var streams = Bindings.GetStreamsInFile();
@@ -134,14 +151,21 @@ public class cPlugin
     {
       MainWindow.Closed -= SpeckleWindowClosed;
       MainWindow.Closing -= SpeckleWindowClosed;
-      MainWindow = null;
+
+      // CRITICAL: Hide the window instead of setting to null
+      // This keeps Avalonia's Application.Current alive
+      MainWindow.Hide();
+
+      // DON'T set MainWindow = null yet - that might trigger Avalonia shutdown
+      // MainWindow = null;
     }
 
-    SpeckleLog.Logger.Information("✅ Window cleaned up - ready for next open");
+    SpeckleLog.Logger.Information("✅ Window hidden - ready for next open");
+    SpeckleLog.Logger.Information("🔍 Application.Current after hide - is null? {IsNull}", Application.Current == null);
 
     // DON'T call pluginCallback.Finish(0) here!
     // That unloads the entire plugin and destroys Application.Current
-    // Just clean up the window and leave the plugin loaded so it can be reopened
+    // Just hide the window and leave the plugin loaded so it can be reopened
 
     // Only exit if we're in the standalone driver process
     Process[] processCollection = Process.GetProcesses();
