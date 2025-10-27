@@ -103,6 +103,13 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
 
     var newPlaceholderObjects = ConvertReceivedObjects(converter, progress);
 
+    progress.Report.Log($"📊 Conversion Summary:");
+    progress.Report.Log($"   Total objects processed: {newPlaceholderObjects.Count}");
+    progress.Report.Log($"   Created: {newPlaceholderObjects.Count(o => o.Status == ApplicationObject.State.Created)}");
+    progress.Report.Log($"   Updated: {newPlaceholderObjects.Count(o => o.Status == ApplicationObject.State.Updated)}");
+    progress.Report.Log($"   Failed: {newPlaceholderObjects.Count(o => o.Status == ApplicationObject.State.Failed)}");
+    progress.Report.Log($"   Skipped: {newPlaceholderObjects.Count(o => o.Status == ApplicationObject.State.Skipped)}");
+
     DeleteObjects(previouslyReceivedObjects, newPlaceholderObjects, progress);
 
     // The following block of code is a hack to properly refresh the view
@@ -110,12 +117,15 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
 #if ETABS || ETABS22
     if (newPlaceholderObjects.Any(o => o.Status == ApplicationObject.State.Updated))
     {
+      progress.Report.Log($"🔄 Refreshing database table for updated objects");
       RefreshDatabaseTable("Beam Object Connectivity");
     }
 #endif
 
+    progress.Report.Log($"🔄 Refreshing ETABS view (RefreshWindow + RefreshView)");
     Model.View.RefreshWindow();
     Model.View.RefreshView();
+    progress.Report.Log($"✅ View refresh completed");
 
     state.ReceivedObjects = newPlaceholderObjects;
 
@@ -157,10 +167,31 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
         }
         var conversionResult = (ApplicationObject)converter.ConvertToNative(@base);
 
+        progress.Report.Log($"🔍 Conversion result - Status: {conversionResult.Status}");
+        progress.Report.Log($"🔍 Created IDs count: {conversionResult.CreatedIds?.Count ?? 0}");
+        progress.Report.Log($"🔍 Converted count: {conversionResult.Converted?.Count ?? 0}");
+
+        if (conversionResult.CreatedIds != null && conversionResult.CreatedIds.Any())
+        {
+          progress.Report.Log($"✅ Created IDs: {string.Join(", ", conversionResult.CreatedIds)}");
+        }
+
+        if (conversionResult.Converted != null && conversionResult.Converted.Any())
+        {
+          progress.Report.Log($"✅ Converted objects: {string.Join(", ", conversionResult.Converted)}");
+        }
+
+        if (!string.IsNullOrEmpty(conversionResult.Log))
+        {
+          progress.Report.Log($"📝 Conversion log: {conversionResult.Log}");
+        }
+
         var finalStatus =
           conversionResult.Status != ApplicationObject.State.Unknown
             ? conversionResult.Status
             : ApplicationObject.State.Created;
+
+        progress.Report.Log($"📊 Final status: {finalStatus}");
 
         obj.Update(
           status: finalStatus,
