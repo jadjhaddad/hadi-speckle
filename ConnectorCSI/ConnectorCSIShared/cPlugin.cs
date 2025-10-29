@@ -46,13 +46,16 @@ public class cPlugin
       if (Application.Current != null)
       {
         SpeckleLog.Logger.Information("🔍 Application.Current type: {Type}", Application.Current.GetType().FullName);
+        SpeckleLog.Logger.Information("🔍 Application.Current.Styles count: {Count}", Application.Current.Styles.Count);
       }
 
-      // Check if Avalonia is ALREADY initialized in this PROCESS (not just this plugin instance)
-      // Application.Current persists across plugin reloads within the same ETABS process
+      // CRITICAL: Check Application.Current FIRST, not _avaloniaInitialized
+      // Reason: ETABS may reset static fields when reloading plugin, but Application.Current
+      // persists in process memory. If we try to initialize again when Application.Current
+      // already exists, we get Material.Avalonia cast errors.
       if (Application.Current != null)
       {
-        SpeckleLog.Logger.Information("⚠️ Avalonia already initialized in this process - skipping initialization");
+        SpeckleLog.Logger.Information("⚠️ Application.Current already exists in process - skipping Avalonia initialization");
         _avaloniaInitialized = true;
       }
       else if (!_avaloniaInitialized)
@@ -75,12 +78,21 @@ public class cPlugin
           _avaloniaInitialized = true;
 
           SpeckleLog.Logger.Information("✅ Avalonia initialized successfully");
+          SpeckleLog.Logger.Information("🔍 Application.Current after init - is null? {IsNull}", Application.Current == null);
+          if (Application.Current != null)
+          {
+            SpeckleLog.Logger.Information("🔍 Application.Current.Styles count: {Count}", Application.Current.Styles.Count);
+          }
         }
         catch (Exception ex)
         {
           SpeckleLog.Logger.Error(ex, "❌ Failed to initialize Avalonia");
           throw;
         }
+      }
+      else
+      {
+        SpeckleLog.Logger.Information("ℹ️ Avalonia already initialized in this plugin instance");
       }
 
       // If window exists, show it (whether visible or hidden)
