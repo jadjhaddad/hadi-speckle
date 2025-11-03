@@ -35,9 +35,87 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
   {
     Exceptions.Clear();
 
+#if ETABS22
+    SpeckleLog.Logger.Information("✅ Using direct converter reference for ETABS22 receive");
+
+    // CRITICAL: Initialize KitManager to register types for deserialization
+    // Even though we're not using KitManager to load the converter,
+    // the deserializer needs KitManager.Types to be populated
+    // Otherwise all objects deserialize as plain Base!
+
+    // Force load the Objects assembly BEFORE initializing KitManager
+    var objectsAssembly = typeof(Objects.Structural.Geometry.Element1D).Assembly;
+    SpeckleLog.Logger.Information("🔍 Objects assembly loaded: {Assembly}", objectsAssembly.FullName);
+    SpeckleLog.Logger.Information("🔍 Objects assembly location: {Location}", objectsAssembly.Location);
+
+    // Manually instantiate ObjectsKit to ensure its types are available
+    var objectsKit = new Objects.ObjectsKit();
+    var objectsKitTypes = objectsKit.Types.ToList();
+    SpeckleLog.Logger.Information("📦 ObjectsKit has {Count} types", objectsKitTypes.Count);
+    SpeckleLog.Logger.Information("   Sample types: {Types}",
+      string.Join(", ", objectsKitTypes.Take(5).Select(t => t.Name)));
+
+    // Now initialize KitManager - it should pick up our loaded Objects assembly
+    var kits = KitManager.Kits; // This triggers KitManager.Initialize()
+    SpeckleLog.Logger.Information("🔧 KitManager initialized - {Count} kits loaded", kits.Count());
+
+    foreach (var kit in kits)
+    {
+      SpeckleLog.Logger.Information("   Kit: {Name} ({TypeCount} types)", kit.Name, kit.Types.Count());
+    }
+
+    // Verify types are registered in KitManager
+    var typesCount = KitManager.Types.Count();
+    SpeckleLog.Logger.Information("🔍 KitManager has {Count} types registered", typesCount);
+
+    if (typesCount < 100)
+    {
+      SpeckleLog.Logger.Warning("⚠️ KitManager has very few types! Manually injecting ObjectsKit types...");
+
+      // Use reflection to inject types into KitManager's internal list
+      var kitManagerType = typeof(KitManager);
+      var availableTypesField = kitManagerType.GetField("s_availableTypes",
+        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+      if (availableTypesField != null)
+      {
+        var currentTypes = (List<Type>)availableTypesField.GetValue(null);
+        // Add ObjectsKit types if not already present
+        foreach (var type in objectsKitTypes)
+        {
+          if (!currentTypes.Contains(type))
+          {
+            currentTypes.Add(type);
+          }
+        }
+        SpeckleLog.Logger.Information("✅ Manually added {Count} types to KitManager", objectsKitTypes.Count);
+        SpeckleLog.Logger.Information("🔍 KitManager now has {Count} types", KitManager.Types.Count());
+      }
+    }
+
+    // Log first 10 types to verify
+    var registeredTypes = KitManager.Types.Take(10).ToList();
+    SpeckleLog.Logger.Information("📋 First 10 registered types:");
+    foreach (var type in registeredTypes)
+    {
+      SpeckleLog.Logger.Information("   - {Type}", type.FullName);
+    }
+
+    // Check if Element1D is registered (key type for structural elements)
+    var hasElement1D = KitManager.Types.Any(t => t.Name == "Element1D");
+    SpeckleLog.Logger.Information("🔍 Element1D type registered: {Registered}", hasElement1D);
+
+    // Direct instantiation - no assembly loading, preserves type identity
+    var converter = new Objects.Converter.CSI.ConverterCSI();
+    SpeckleLog.Logger.Information("✅ Created ConverterCSI instance for receive");
+    SpeckleLog.Logger.Information("🔍 Converter type: {Type}", converter.GetType().FullName);
+#else
+    SpeckleLog.Logger.Information("✅ Using default kit manager for receive");
     var kit = KitManager.GetDefaultKit();
     var appName = GetHostAppVersion(Model);
     ISpeckleConverter converter = kit.LoadConverter(appName);
+    SpeckleLog.Logger.Information("✅ Loaded converter: {Type}", converter.GetType().FullName);
+#endif
 
     // set converter settings as tuples (setting slug, setting selection)
     // for csi, these must go before the SetContextDocument method.
@@ -51,6 +129,9 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
     converter.SetConverterSettings(settings);
 
     converter.SetContextDocument(Model);
+
+    SpeckleLog.Logger.Information("🚀 DIAGNOSTIC CODE ACTIVE - Enhanced logging enabled (commit f601254)");
+
     Exceptions.Clear();
     var previouslyReceivedObjects = state.ReceivedObjects;
 
@@ -68,7 +149,11 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
 
     //Execute.PostToUIThread(() => state.Progress.Maximum = state.SelectedObjectIds.Count());
 
-    Preview = FlattenCommitObject(commitObject, converter, msg => progress.Report.Log(msg));
+    Preview = FlattenCommitObject(commitObject, converter, msg => {
+      progress.Report.Log(msg);
+      SpeckleLog.Logger.Information(msg);
+    });
+    SpeckleLog.Logger.Information("🔍 Objects returned by traversal: {Count}", Preview.Count);
     progress.Report.Log($"🔍 Objects returned by traversal: {Preview.Count}");
     foreach (var previewObj in Preview)
     {
@@ -91,19 +176,39 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
 
     var newPlaceholderObjects = ConvertReceivedObjects(converter, progress);
 
+    SpeckleLog.Logger.Information("📊 Conversion Summary:");
+    SpeckleLog.Logger.Information("   Total objects processed: {Count}", newPlaceholderObjects.Count);
+    SpeckleLog.Logger.Information("   Created: {Count}", newPlaceholderObjects.Count(o => o.Status == ApplicationObject.State.Created));
+    SpeckleLog.Logger.Information("   Updated: {Count}", newPlaceholderObjects.Count(o => o.Status == ApplicationObject.State.Updated));
+    SpeckleLog.Logger.Information("   Failed: {Count}", newPlaceholderObjects.Count(o => o.Status == ApplicationObject.State.Failed));
+    SpeckleLog.Logger.Information("   Skipped: {Count}", newPlaceholderObjects.Count(o => o.Status == ApplicationObject.State.Skipped));
+
+    progress.Report.Log($"📊 Conversion Summary:");
+    progress.Report.Log($"   Total objects processed: {newPlaceholderObjects.Count}");
+    progress.Report.Log($"   Created: {newPlaceholderObjects.Count(o => o.Status == ApplicationObject.State.Created)}");
+    progress.Report.Log($"   Updated: {newPlaceholderObjects.Count(o => o.Status == ApplicationObject.State.Updated)}");
+    progress.Report.Log($"   Failed: {newPlaceholderObjects.Count(o => o.Status == ApplicationObject.State.Failed)}");
+    progress.Report.Log($"   Skipped: {newPlaceholderObjects.Count(o => o.Status == ApplicationObject.State.Skipped)}");
+
     DeleteObjects(previouslyReceivedObjects, newPlaceholderObjects, progress);
 
     // The following block of code is a hack to properly refresh the view
-    // I've only experienced this bug in ETABS so far
-#if ETABS
+    // This bug exists in both ETABS and ETABS22
+#if ETABS || ETABS22
     if (newPlaceholderObjects.Any(o => o.Status == ApplicationObject.State.Updated))
     {
+      SpeckleLog.Logger.Information("🔄 Refreshing database table for updated objects");
+      progress.Report.Log($"🔄 Refreshing database table for updated objects");
       RefreshDatabaseTable("Beam Object Connectivity");
     }
 #endif
 
+    SpeckleLog.Logger.Information("🔄 Refreshing ETABS view (RefreshWindow + RefreshView)");
+    progress.Report.Log($"🔄 Refreshing ETABS view (RefreshWindow + RefreshView)");
     Model.View.RefreshWindow();
     Model.View.RefreshView();
+    SpeckleLog.Logger.Information("✅ View refresh completed");
+    progress.Report.Log($"✅ View refresh completed");
 
     state.ReceivedObjects = newPlaceholderObjects;
 
@@ -115,17 +220,33 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
     List<ApplicationObject> conversionResults = new();
     ConcurrentDictionary<string, int> conversionProgressDict = new() { ["Conversion"] = 1 };
 
+    SpeckleLog.Logger.Information("🔄 Starting conversion of {Count} objects", Preview.Count);
+
+    int objectIndex = 0;
     foreach (var obj in Preview)
     {
       if (!StoredObjects.ContainsKey(obj.OriginalId))
       {
+        SpeckleLog.Logger.Warning("⚠️ Object not in StoredObjects: {Id}", obj.OriginalId);
         continue;
       }
 
       progress.CancellationToken.ThrowIfCancellationRequested();
 
       var @base = StoredObjects[obj.OriginalId];
+
+      // Log details for first 3 objects to avoid log spam
+      if (objectIndex < 3)
+      {
+        SpeckleLog.Logger.Information("🔹 Converting object #{Index}:", objectIndex);
+        SpeckleLog.Logger.Information("   speckle_type: {SpeckleType}", @base.speckle_type);
+        SpeckleLog.Logger.Information("   .NET Type: {DotNetType}", @base.GetType().FullName);
+        SpeckleLog.Logger.Information("   ID: {Id}", @base.id);
+      }
+
       progress.Report.Log($"🔹 Type: {@base.speckle_type} | ID: {@base.id}");
+
+      objectIndex++;
 
       if (@base is Element2D e2d)
       {
@@ -143,12 +264,72 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
         {
           progress.Report.Log($"🧱 Element2D detected: {elem.name}");
         }
+
+        if (objectIndex - 1 < 3)
+        {
+          SpeckleLog.Logger.Information("⏳ Calling converter.ConvertToNative()...");
+        }
         var conversionResult = (ApplicationObject)converter.ConvertToNative(@base);
+        if (objectIndex - 1 < 3)
+        {
+          SpeckleLog.Logger.Information("✅ ConvertToNative() returned");
+        }
+
+        if (objectIndex - 1 < 3)
+        {
+          SpeckleLog.Logger.Information("🔍 Conversion result - Status: {Status}", conversionResult.Status);
+          SpeckleLog.Logger.Information("🔍 Created IDs count: {Count}", conversionResult.CreatedIds?.Count ?? 0);
+          SpeckleLog.Logger.Information("🔍 Converted count: {Count}", conversionResult.Converted?.Count ?? 0);
+
+          if (conversionResult.CreatedIds != null && conversionResult.CreatedIds.Any())
+          {
+            var idStrings = conversionResult.CreatedIds.Select(id => id?.ToString() ?? "null");
+            SpeckleLog.Logger.Information("✅ Created IDs: {Ids}", string.Join(", ", idStrings));
+          }
+
+          if (conversionResult.Converted != null && conversionResult.Converted.Any())
+          {
+            var convertedStrings = conversionResult.Converted.Select(c => c?.ToString() ?? "null");
+            SpeckleLog.Logger.Information("✅ Converted objects: {Objects}", string.Join(", ", convertedStrings));
+          }
+
+          if (conversionResult.Log != null && conversionResult.Log.Any())
+          {
+            SpeckleLog.Logger.Information("📝 Conversion log: {Log}", string.Join(", ", conversionResult.Log));
+          }
+        }
+
+        progress.Report.Log($"🔍 Conversion result - Status: {conversionResult.Status}");
+        progress.Report.Log($"🔍 Created IDs count: {conversionResult.CreatedIds?.Count ?? 0}");
+        progress.Report.Log($"🔍 Converted count: {conversionResult.Converted?.Count ?? 0}");
+
+        if (conversionResult.CreatedIds != null && conversionResult.CreatedIds.Any())
+        {
+          var idStrings = conversionResult.CreatedIds.Select(id => id?.ToString() ?? "null");
+          progress.Report.Log($"✅ Created IDs: {string.Join(", ", idStrings)}");
+        }
+
+        if (conversionResult.Converted != null && conversionResult.Converted.Any())
+        {
+          var convertedStrings = conversionResult.Converted.Select(c => c?.ToString() ?? "null");
+          progress.Report.Log($"✅ Converted objects: {string.Join(", ", convertedStrings)}");
+        }
+
+        if (conversionResult.Log != null && conversionResult.Log.Any())
+        {
+          progress.Report.Log($"📝 Conversion log: {string.Join(", ", conversionResult.Log)}");
+        }
 
         var finalStatus =
           conversionResult.Status != ApplicationObject.State.Unknown
             ? conversionResult.Status
             : ApplicationObject.State.Created;
+
+        if (objectIndex - 1 < 3)
+        {
+          SpeckleLog.Logger.Information("📊 Final status: {Status}", finalStatus);
+        }
+        progress.Report.Log($"📊 Final status: {finalStatus}");
 
         obj.Update(
           status: finalStatus,
@@ -199,6 +380,7 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
 
     ApplicationObject CreateApplicationObject(Base current)
     {
+      log($"=================\nobject.GetType: {current.GetType()}\nobject.speckle_type: {current.speckle_type}");
       ApplicationObject NewAppObj()
       {
         var speckleType = current
@@ -227,7 +409,7 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
 
       //Handle objects convertable using displayValues
       var fallbackMember = DefaultTraversal
-        .displayValuePropAliases.Where(o => current[o] != null)
+        .DisplayValuePropAliases.Where(o => current[o] != null)
         .Select(o => current[o])
         .FirstOrDefault();
 
@@ -244,7 +426,7 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
       return null;
     }
 
-    var traverseFunction = DefaultTraversal.CreateTraverseFunc(converter);
+    var traverseFunction = DefaultTraversal.CreateTraversalFunc();
 
     var objectsToConvert = traverseFunction
       .Traverse(obj)

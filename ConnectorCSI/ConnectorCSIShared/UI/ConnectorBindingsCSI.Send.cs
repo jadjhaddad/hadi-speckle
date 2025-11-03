@@ -31,127 +31,28 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
 
   public override async Task<string> SendStream(StreamState state, ProgressViewModel progress)
   {
-    SpeckleLog.Logger.Information("🧪 Available kits before GetDefaultKit():");
-
-    foreach (var loadedKit in KitManager.Kits)
-    {
-      SpeckleLog.Logger.Information($"🔍 Kit registered: {loadedKit.GetType().FullName}, Name: {loadedKit.Name}");
-    }
-
-    foreach (var loadedKit in KitManager.Kits)
-    {
-      SpeckleLog.Logger.Information($"🔍 Kit Name: {loadedKit.Name}, Converters: {string.Join(", ", loadedKit.Converters)}");
-    }
-    foreach (var loadedKit in KitManager.Kits)
-    {
-      SpeckleLog.Logger.Information("🔍 Kit found: {kitName} with Converters: {converters}", loadedKit.Name, string.Join(", ", loadedKit.Converters));
-    }
-
-    var kitsForEtabs = KitManager.GetKitsWithConvertersForApp("ETABS22").ToList();
-    SpeckleLog.Logger.Information("✅ Kits with ETABS22: {count}", kitsForEtabs.Count);
-
-    foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
-    {
-      if (asm.FullName.Contains("Objects"))
-        SpeckleLog.Logger.Information("🔧 Loaded: {name} from {path}", asm.FullName, asm.Location);
-    }
-
 #if ETABS22
-    SpeckleLog.Logger.Information("🚧 Manually loading ObjectsKit and ETABS22 converter.");
+    SpeckleLog.Logger.Information("✅ Using direct converter reference for ETABS22");
 
-    var kit = new Objects.ObjectsKit();
-    SpeckleLog.Logger.Information("✅ Loaded Objects Kit manually.");
+    // Direct instantiation - no assembly loading, preserves type identity
+    var converter = new Objects.Converter.CSI.ConverterCSI();
 
-    var basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-    var converterPath = Path.Combine(basePath!, "Objects.Converter.ETABS22.dll");
-
-    // Fallback to shared objects folder if not found
-    if (!File.Exists(converterPath))
-    {
-      converterPath = Path.Combine(Objects.ObjectsKit.ObjectsFolder, "Objects.Converter.ETABS22.dll");
-    }
-
-    if (!File.Exists(converterPath))
-    {
-      throw new FileNotFoundException("❌ Could not find ETABS22 converter DLL", converterPath);
-    }
-
-    var assembly = Assembly.LoadFrom(converterPath); // You can switch to Load(bytes) if needed
-    SpeckleLog.Logger.Information("🔍 Scanning loaded assembly for ISpeckleConverter implementations...");
-
-    Type[] types;
-    try
-    {
-      types = assembly.GetTypes();
-    }
-    catch (ReflectionTypeLoadException ex)
-    {
-      SpeckleLog.Logger.Fatal("❌ Could not load types from ETABS22 DLL: {Message}", ex.Message);
-      foreach (var loaderEx in ex.LoaderExceptions)
-        SpeckleLog.Logger.Fatal("⛔ Loader exception: {Error}", loaderEx?.Message ?? "Unknown error");
-      throw;
-    }
-
-    SpeckleLog.Logger.Information("📦 Found {Count} types in ETABS22 assembly.", types.Length);
-
-    Type converterType = null;
-    foreach (var type in types)
-    {
-      SpeckleLog.Logger.Information("🔍 Type: {Type}", type.FullName);
-
-      // Match by interface name to avoid type identity issues
-      bool implementsConverter = type.GetInterfaces()
-        .Any(i => i.FullName == "Speckle.Core.Kits.ISpeckleConverter");
-
-      if (implementsConverter && !type.IsAbstract)
-      {
-        SpeckleLog.Logger.Information("✅ ISpeckleConverter candidate found: {Type}", type.FullName);
-        converterType = type;
-        break;
-      }
-    }
-
-    if (converterType == null)
-    {
-      throw new Exception("❌ Could not find a suitable ISpeckleConverter in ETABS22 DLL");
-    }
-
-    SpeckleLog.Logger.Information("🔬 ISpeckleConverter interface is from: {Assembly}", typeof(ISpeckleConverter).Assembly.Location);
-    SpeckleLog.Logger.Information("🔬 Converter type is from: {Assembly}", converterType.Assembly.Location);
-
-    // ✅ Use dynamic to bypass type identity mismatch
-    dynamic converter = Activator.CreateInstance(converterType)!;
-
-    SpeckleLog.Logger.Information("✅ Created instance of {Type}", converterType.FullName);
-    SpeckleLog.Logger.Information("🔬 Created object type: {Type}", converter.GetType().FullName);
-    SpeckleLog.Logger.Information("🔬 ISpeckleConverter loaded from: {Path}", typeof(ISpeckleConverter).Assembly.Location);
-    SpeckleLog.Logger.Information("🔬 rawInstance loaded from: {Path}", converter.GetType().Assembly.Location);
-
-    // Defensive runtime check
-    Type actualType = ((object)converter).GetType();
-    bool runtimeCheck = actualType.GetInterfaces()
-      .Any(i => i.FullName == "Speckle.Core.Kits.ISpeckleConverter");
-
-
-    if (!runtimeCheck)
-    {
-      SpeckleLog.Logger.Warning("⚠️ Dynamic converter does not appear to implement ISpeckleConverter at runtime.");
-    }
+    SpeckleLog.Logger.Information("✅ Created ConverterCSI instance");
+    SpeckleLog.Logger.Information("🔍 Converter type: {Type}", converter.GetType().FullName);
+    SpeckleLog.Logger.Information("🔍 Converter assembly: {Path}", converter.GetType().Assembly.Location);
 
     var supportedApps = converter.GetServicedApplications();
-    SpeckleLog.Logger.Information("🔗 {Type} supports apps: {Apps}", converterType.FullName, string.Join(", ", supportedApps));
+    SpeckleLog.Logger.Information("🔗 Converter supports apps: {Apps}", string.Join(", ", supportedApps));
 #else
-    SpeckleLog.Logger.Information("✅ Using default kit manager.");
+    SpeckleLog.Logger.Information("✅ Using default kit manager");
     var kit = KitManager.GetDefaultKit();
     SpeckleLog.Logger.Information("✅ Loaded Objects Kit");
 
     var appName = GetHostAppVersion(Model);
-    SpeckleLog.Logger.Warning("🔍 Requested converter for app: {App}", appName);
+    SpeckleLog.Logger.Information("🔍 Requested converter for app: {App}", appName);
 
     var converter = kit.LoadConverter(appName);
     SpeckleLog.Logger.Information("✅ Loaded converter: {Type}", converter.GetType().FullName);
-    SpeckleLog.Logger.Information("🔬 ISpeckleConverter interface is from: {Path}", typeof(ISpeckleConverter).Assembly.Location);
-    SpeckleLog.Logger.Information("🔬 Loaded converter type is from: {Path}", converter.GetType().Assembly.Location);
 
 #endif
     var savedSelection = SaveCurrentSelection();
@@ -290,6 +191,17 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
           {
             commitObjects.Add(converted);
           }
+
+          // Enhanced diagnostic logging
+          Base convertedBase = converted as Base;
+          if (convertedBase != null)
+          {
+            SpeckleLog.Logger.Information("🔍 Converted object details:");
+            SpeckleLog.Logger.Information("   .NET Type: {Type}", converted.GetType().FullName);
+            SpeckleLog.Logger.Information("   speckle_type: {SpeckleType}", convertedBase.speckle_type);
+            SpeckleLog.Logger.Information("   Type Name: {TypeName}", converted.GetType().Name);
+          }
+
           SpeckleLog.Logger.ForContext<ConnectorBindingsCSI>().Information($"[Send] Added {converted.GetType().Name} to commit: {typeAndName.name}");
           SpeckleLog.Logger.ForContext<ConnectorBindingsCSI>().Information($"📦 Added {converted.GetType().Name} with displayValue? {(converted["displayValue"] != null)}");
         }
@@ -330,12 +242,37 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
     ConcurrentDictionary<string, int> conversionProgressDict
   )
   {
-    var commitObj = new Base();
+    // Use Collection instead of Base to ensure elements are detached properly
+    // This prevents hitting the 25MB object size limit on large models
+    var commitObj = new Collection("CSI Model", "CSI");
+
     // Add model-level info if needed
-    commitObj["@Model"] = converter.ConvertToSpeckle(("Model", "CSI"));
+    var modelObj = converter.ConvertToSpeckle(("Model", "CSI"));
+
+    // Diagnostic logging for assembly mismatch debugging
+    if (modelObj != null)
+    {
+      Type modelType = ((object)modelObj).GetType();
+      SpeckleLog.Logger.Information("🔍 Model object type: {Type}", modelType.FullName);
+      SpeckleLog.Logger.Information("🔍 Model assembly: {Assembly}", modelType.Assembly.Location);
+      SpeckleLog.Logger.Information("🔍 Model assembly version: {Version}", modelType.Assembly.GetName().Version);
+      SpeckleLog.Logger.Information("🔍 Model is Base? {IsBase}", modelObj is Speckle.Core.Models.Base);
+
+      // Check the Base type from the serializer's perspective
+      var baseType = typeof(Speckle.Core.Models.Base);
+      SpeckleLog.Logger.Information("🔍 Expected Base type assembly: {Assembly}", baseType.Assembly.Location);
+      SpeckleLog.Logger.Information("🔍 Expected Base type version: {Version}", baseType.Assembly.GetName().Version);
+
+      // Check if types are assignable
+      bool isAssignable = baseType.IsAssignableFrom(modelType);
+      SpeckleLog.Logger.Information("🔍 Is Model assignable to Base? {IsAssignable}", isAssignable);
+    }
+
+    commitObj["@Model"] = modelObj;
 
     // Add converted objects to the commit
-    commitObj["elements"] = objects;
+    // Using Collection.elements ensures [DetachProperty] is applied
+    commitObj.elements = objects.Cast<Base>().ToList();
 
     // Optionally include analysis results
     commitObj["AnalysisResults"] = converter.ConvertToSpeckle(("AnalysisResults", "CSI"));

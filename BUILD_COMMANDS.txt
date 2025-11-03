@@ -1,0 +1,103 @@
+================================================================
+ETABS22 BUILD COMMANDS - COPY AND PASTE ONE BY ONE
+================================================================
+
+If you can't run scripts, copy and paste these commands one by one
+into PowerShell or Command Prompt.
+
+Open PowerShell or Command Prompt, navigate to the solution folder:
+cd C:\Users\jjhaddad\source\repos\speckle-sharp-main
+
+Then copy and paste each command below, one at a time:
+
+----------------------------------------------------------------
+STEP 1: Clean Solution
+----------------------------------------------------------------
+dotnet clean All.sln
+
+----------------------------------------------------------------
+STEP 2: Remove bin and obj folders
+----------------------------------------------------------------
+Get-ChildItem -Path . -Include bin,obj -Recurse -Directory | Remove-Item -Recurse -Force
+
+OR if using Command Prompt:
+for /d /r . %d in (bin obj) do @if exist "%d" rd /s /q "%d"
+
+----------------------------------------------------------------
+STEP 3: Clean ETABS Plug-Ins folder
+----------------------------------------------------------------
+Remove-Item "C:\ProgramData\Computers and Structures\ETABS 22\Plug-Ins\*.dll" -Force
+
+OR if using Command Prompt:
+del /q "C:\ProgramData\Computers and Structures\ETABS 22\Plug-Ins\*.dll"
+
+----------------------------------------------------------------
+STEP 4: Clean AppData Kits folder (IMPORTANT - prevents old DLL loading)
+----------------------------------------------------------------
+Remove-Item "$env:APPDATA\Speckle\Kits\Objects\Objects.Converter.ETABS22.dll" -Force -ErrorAction SilentlyContinue
+
+OR if using Command Prompt:
+del /q "%APPDATA%\Speckle\Kits\Objects\Objects.Converter.ETABS22.dll"
+
+----------------------------------------------------------------
+STEP 5: Build Core
+----------------------------------------------------------------
+dotnet build Core\Core\Core.csproj -c Debug /p:SkipHusky=true
+
+----------------------------------------------------------------
+STEP 5: Build Objects
+----------------------------------------------------------------
+dotnet build Objects\Objects\Objects.csproj -c Debug /p:SkipHusky=true
+
+----------------------------------------------------------------
+STEP 6: Build DesktopUI2
+----------------------------------------------------------------
+dotnet build DesktopUI2\DesktopUI2\DesktopUI2.csproj -c Debug /p:SkipHusky=true
+
+----------------------------------------------------------------
+STEP 7: Build ConverterETABS22
+----------------------------------------------------------------
+dotnet build Objects\Converters\ConverterCSI\ConverterETABS22\ConverterETABS22.csproj -c Debug /p:SkipHusky=true
+
+----------------------------------------------------------------
+STEP 8: Build ConnectorETABS22
+----------------------------------------------------------------
+dotnet build ConnectorCSI\ConnectorETABS22\ConnectorETABS22.csproj -c Debug /p:SkipHusky=true
+
+----------------------------------------------------------------
+STEP 9: Verify DLLs were copied (PowerShell)
+----------------------------------------------------------------
+Get-ChildItem "C:\ProgramData\Computers and Structures\ETABS 22\Plug-Ins\" -Filter *.dll | Select-Object Name, LastWriteTime
+
+OR if using Command Prompt:
+dir "C:\ProgramData\Computers and Structures\ETABS 22\Plug-Ins\*.dll"
+
+----------------------------------------------------------------
+STEP 10: Check for critical DLLs (PowerShell)
+----------------------------------------------------------------
+Test-Path "C:\ProgramData\Computers and Structures\ETABS 22\Plug-Ins\SpeckleConnectorCSI.dll"
+Test-Path "C:\ProgramData\Computers and Structures\ETABS 22\Plug-Ins\Objects.dll"
+Test-Path "C:\ProgramData\Computers and Structures\ETABS 22\Plug-Ins\Speckle.Core.dll"
+Test-Path "C:\ProgramData\Computers and Structures\ETABS 22\Plug-Ins\Objects.Converter.ETABS22.dll"
+
+Each should return "True"
+
+OR if using Command Prompt:
+if exist "C:\ProgramData\Computers and Structures\ETABS 22\Plug-Ins\SpeckleConnectorCSI.dll" (echo Found) else (echo Missing)
+if exist "C:\ProgramData\Computers and Structures\ETABS 22\Plug-Ins\Objects.dll" (echo Found) else (echo Missing)
+if exist "C:\ProgramData\Computers and Structures\ETABS 22\Plug-Ins\Speckle.Core.dll" (echo Found) else (echo Missing)
+if exist "C:\ProgramData\Computers and Structures\ETABS 22\Plug-Ins\Objects.Converter.ETABS22.dll" (echo Found) else (echo Missing)
+
+================================================================
+DONE!
+================================================================
+
+After all commands complete successfully:
+1. Close ETABS 22 if it's running
+2. Launch ETABS 22
+3. Open your model
+4. Try sending objects to Speckle
+5. Check logs for diagnostic messages (look for 📍 and 🔍 symbols)
+
+The logs will show which assemblies are being loaded and their versions.
+This will help confirm the assembly mismatch is resolved.
