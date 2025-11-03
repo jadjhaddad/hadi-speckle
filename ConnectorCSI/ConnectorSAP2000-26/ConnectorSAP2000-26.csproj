@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
@@ -50,10 +50,6 @@
     <Reference Include="CSiAPIv1">
       <HintPath>..\..\..\..\..\..\..\Program Files\Computers and Structures\SAP2000 26\CSiAPIv1.dll</HintPath>
     </Reference>
-    <Reference Include="SAP2000v1">
-      <HintPath>..\..\..\..\..\..\..\Program Files\Computers and Structures\SAP2000 26\SAP2000v1.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
 
     <!-- System DLLs -->
     <Reference Include="System" />
@@ -92,6 +88,7 @@
     <ProjectReference Include="..\..\DesktopUI2\DesktopUI2\DesktopUI2.csproj" />
     <ProjectReference Include="..\..\Objects\Converters\StructuralUtilities\PolygonMesher\PolygonMesher.csproj" />
     <ProjectReference Include="..\..\Objects\Objects\Objects.csproj" />
+    <ProjectReference Include="..\..\Objects\Converters\ConverterCSI\ConverterSAP2000\ConverterSAP2000.csproj" />"
   </ItemGroup>
 
 </Project>
