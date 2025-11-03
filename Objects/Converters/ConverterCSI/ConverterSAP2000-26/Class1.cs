@@ -1,7 +1,7 @@
 using Objects.Converter.CSI; // or whatever your base namespace is
 using Speckle.Core.Kits;
 
-namespace Objects.Converter.ETABS22;
+namespace Objects.Converter.SAP2000;
 
 public class ConverterSAP200026 : ConverterCSI, ISpeckleConverter
 {

@@ -4,7 +4,7 @@ using System.Linq;
 #if ETABS22
 using ETABSv1;
 #elif SAP26
-using SAP2000v1;
+using CSiAPIv1;
 #else
 using CSiAPIv1;
 #endif
@@ -224,6 +224,9 @@ public partial class ConverterCSI
 #if ETABS
   eFrameDesignOrientation frameDesignOrientation = eFrameDesignOrientation.Null;
   Model.FrameObj.GetDesignOrientation(name, ref frameDesignOrientation);
+#elif SAP26
+    eFrameDesignOrientation frameDesignOrientation = eFrameDesignOrientation.Null;
+    Model.FrameObj.GetDesignOrientation(name, ref frameDesignOrientation);
 #else
     eFrameDesignOrientation frameDesignOrientation = eFrameDesignOrientation.Brace;
     if (Math.Abs(pointJNode.basePoint.z - pointINode.basePoint.z) < 0.001)

@@ -4,7 +4,7 @@ using System.Linq;
 #if ETABS22
 using ETABSv1;
 #elif SAP26
-using SAP2000v1;
+using CSiAPIv1;
 #else
 using CSiAPIv1;
 #endif
@@ -52,8 +52,9 @@ public partial class ConverterCSI
     eLength lengthUnits = eLength.NotApplicable;
     eTemperature temperatureUnits = eTemperature.NotApplicable;
     // GetPresentUnits_2() works for ETABS and SAFE
+#if ETABS || ETABS22 || SAFE
     _ = Model.GetPresentUnits_2(ref forceUnits, ref lengthUnits, ref temperatureUnits);
-
+#endif
     if (lengthUnits == eLength.NotApplicable)
     {
       throw new SpeckleException("Unable to retreive valid length units from the ETABS document");

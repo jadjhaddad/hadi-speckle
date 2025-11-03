@@ -3,7 +3,7 @@ using System.Collections.Generic;
 #if ETABS22
 using ETABSv1;
 #elif SAP26
-using SAP2000v1;
+using CSiAPIv1;
 #else
 using CSiAPIv1;
 #endif

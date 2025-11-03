@@ -5,7 +5,7 @@ using ConverterCSIShared.Models;
 #if ETABS22
 using ETABSv1;
 #elif SAP26
-using SAP2000v1;
+using CSiAPIv1;
 #else
 using CSiAPIv1;
 #endif
@@ -91,7 +91,11 @@ public partial class ConverterCSI : ISpeckleConverter, IFinalizable
 
   public void SetContextDocument(object doc)
   {
+#if SAP26
+    Model = (CSiAPIv1.cSapModel)doc;
+#else
     Model = (cSapModel)doc;
+#endif
     double version = 0;
     string versionString = null;
     Model.GetVersion(ref versionString, ref version);

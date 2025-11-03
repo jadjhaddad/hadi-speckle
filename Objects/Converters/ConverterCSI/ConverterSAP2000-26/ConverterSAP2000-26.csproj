@@ -27,6 +27,9 @@
 
   <ItemGroup>
     <!-- SAP2000 COM Reference -->
+    <Reference Include="CSiAPIv1">
+      <HintPath>..\..\..\..\..\..\..\..\..\Program Files\Computers and Structures\SAP2000 26\CSiAPIv1.dll</HintPath>
+    </Reference>
     <Reference Include="SAP2000v1">
       <HintPath>..\..\..\..\..\..\..\..\..\Program Files\Computers and Structures\SAP2000 26\SAP2000v1.dll</HintPath>
       <Private>False</Private>

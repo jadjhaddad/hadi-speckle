@@ -47,6 +47,9 @@
 
   <ItemGroup>
     <!-- SAP2000 COM Reference -->
+    <Reference Include="CSiAPIv1">
+      <HintPath>..\..\..\..\..\..\..\Program Files\Computers and Structures\SAP2000 26\CSiAPIv1.dll</HintPath>
+    </Reference>
     <Reference Include="SAP2000v1">
       <HintPath>..\..\..\..\..\..\..\Program Files\Computers and Structures\SAP2000 26\SAP2000v1.dll</HintPath>
       <Private>False</Private>
@@ -88,6 +91,7 @@
     <ProjectReference Include="..\..\Core\Core\Core.csproj" />
     <ProjectReference Include="..\..\DesktopUI2\DesktopUI2\DesktopUI2.csproj" />
     <ProjectReference Include="..\..\Objects\Converters\StructuralUtilities\PolygonMesher\PolygonMesher.csproj" />
+    <ProjectReference Include="..\..\Objects\Objects\Objects.csproj" />
   </ItemGroup>
 
 </Project>
