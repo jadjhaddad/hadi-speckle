@@ -17,9 +17,6 @@
   </PropertyGroup>
   <Import Project="..\ConnectorCSIShared\ConnectorCSIShared.projitems" Label="Shared" />
   <ItemGroup>
-    <Reference Include="Objects">
-      <HintPath>..\..\Objects\Objects\bin\Debug\netstandard2.0\Objects.dll</HintPath>
-    </Reference>
     <Reference Include="PresentationFramework" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -30,6 +27,7 @@
     <ProjectReference Include="..\..\Core\Core\Core.csproj" />
     <ProjectReference Include="..\..\DesktopUI2\DesktopUI2\DesktopUI2.csproj" />
     <ProjectReference Include="..\..\Objects\Converters\StructuralUtilities\PolygonMesher\PolygonMesher.csproj" />
+    <ProjectReference Include="..\..\Objects\Objects\Objects.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CSiAPIv1" Version="1.0.0" />
