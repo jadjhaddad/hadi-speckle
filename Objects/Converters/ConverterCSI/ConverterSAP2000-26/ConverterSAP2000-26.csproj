@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>Objects.Converter.SAP2000_26</RootNamespace>
+    <AssemblyName>Objects.Converter.SAP2000_26</AssemblyName>
+  </PropertyGroup>
+
+  <Import Project="..\ConverterCSIShared\ConverterCSIShared.projitems" Label="Shared" />
+
+  <ItemGroup>
+    <PackageReference Include="NetTopologySuite" Version="2.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Core\Core\Core.csproj" />
+    <ProjectReference Include="..\..\..\Objects\Objects.csproj" />
+    <ProjectReference Include="..\..\StructuralUtilities\PolygonMesher\PolygonMesher.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="SAP2000v1">
+      <HintPath>..\..\..\..\..\..\..\..\..\Program Files\Computers and Structures\SAP2000 26\SAP2000v1.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
