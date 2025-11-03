@@ -2,6 +2,8 @@ using System;
 using System.Windows.Forms;
 #if ETABS22
 using ETABSv1;
+#elif SAP26
+using SAP26;
 #else
 using CSiAPIv1;
 #endif

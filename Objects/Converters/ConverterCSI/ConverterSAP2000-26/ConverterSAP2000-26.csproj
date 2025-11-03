@@ -2,11 +2,18 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <RootNamespace>Objects.Converter.SAP2000_26</RootNamespace>
-    <AssemblyName>Objects.Converter.SAP2000_26</AssemblyName>
+    <AssemblyName>Objects.Converter.SAP2000</AssemblyName>
+    <RootNamespace>Objects.Converter.SAP2000</RootNamespace>
+    <CopyToKitFolder>true</CopyToKitFolder>
   </PropertyGroup>
 
-  <Import Project="..\ConverterCSIShared\ConverterCSIShared.projitems" Label="Shared" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE;SAP2000;SAP26</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>TRACE;SAP2000;SAP26</DefineConstants>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="NetTopologySuite" Version="2.5.0" />
@@ -19,9 +26,32 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- SAP2000 COM Reference -->
     <Reference Include="SAP2000v1">
       <HintPath>..\..\..\..\..\..\..\..\..\Program Files\Computers and Structures\SAP2000 26\SAP2000v1.dll</HintPath>
+      <Private>False</Private>
     </Reference>
   </ItemGroup>
+
+  <ItemGroup>
+    <DllsToCopy Include="$(TargetDir)*.dll" />
+  </ItemGroup>
+
+  <Target Name="CopyDependenciesToKitfolder" AfterTargets="CopyToKitFolder" Condition="'$(IsDesktopBuild)' == true">
+    <Message Text="Copying dependencies to kit folder" />
+    <Copy Condition="$([MSBuild]::IsOsPlatform('Windows'))" SourceFiles="@(DllsToCopy)" DestinationFolder="$(AppData)\Speckle\Kits\Objects" />
+  </Target>
+
+  <!-- Copy converter DLL to SAP2000 Plug-Ins folder for dynamic loading -->
+  <Target Name="CopyToSAP2000Plugins" AfterTargets="PostBuildEvent">
+    <Message Text="Copying converter to SAP2000 26 Plug-Ins folder" />
+    <Copy Condition="$([MSBuild]::IsOsPlatform('Windows'))" SourceFiles="$(TargetPath)" DestinationFolder="C:\ProgramData\Computers and Structures\SAP2000 26\Plug-Ins\" />
+  </Target>
+
+  <Import Project="..\ConverterCSIShared\ConverterCSIShared.projitems" Label="Shared" />
+
+  <PropertyGroup>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
 
 </Project>

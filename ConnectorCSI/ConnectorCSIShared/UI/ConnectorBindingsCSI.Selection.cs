@@ -185,8 +185,8 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
           res = Model.AreaObj.SetSelected(name, true);
           break;
         case "solid":
-        #if ETABS22
-          SpeckleLog.Logger.Warning($"[Connector] 🚫 Skipping solid '{name}' — not supported in ETABS 22");
+        #if ETABS22 || SAP26
+          SpeckleLog.Logger.Warning($"[Connector] 🚫 Skipping solid '{name}' — not supported in ETABS 22/SAP2000 26");
           continue;
         #else
           res = Model.SolidObj.SetSelected(name, true);

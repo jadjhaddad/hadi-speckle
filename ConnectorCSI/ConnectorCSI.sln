@@ -45,6 +45,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConnectorETABS22", "Connect
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConverterETABS22", "..\Objects\Converters\ConverterCSI\ConverterETABS22\ConverterETABS22.csproj", "{5B6043D2-920C-5E45-D332-B7B7D0477165}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConverterSAP2000-26", "..\Objects\Converters\ConverterCSI\ConverterSAP2000-26\ConverterSAP2000-26.csproj", "{02FD5E1C-B9F2-4138-A650-5A0701C1BD8C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConnectorSAP2000-26", "ConnectorSAP2000-26\ConnectorSAP2000-26.csproj", "{62A835FE-26B3-45B2-9780-71D4EFF98092}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -115,6 +119,14 @@ Global
 		{5B6043D2-920C-5E45-D332-B7B7D0477165}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5B6043D2-920C-5E45-D332-B7B7D0477165}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5B6043D2-920C-5E45-D332-B7B7D0477165}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02FD5E1C-B9F2-4138-A650-5A0701C1BD8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02FD5E1C-B9F2-4138-A650-5A0701C1BD8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02FD5E1C-B9F2-4138-A650-5A0701C1BD8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02FD5E1C-B9F2-4138-A650-5A0701C1BD8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{62A835FE-26B3-45B2-9780-71D4EFF98092}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{62A835FE-26B3-45B2-9780-71D4EFF98092}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{62A835FE-26B3-45B2-9780-71D4EFF98092}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{62A835FE-26B3-45B2-9780-71D4EFF98092}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -139,15 +151,19 @@ Global
 		{C59939F6-D383-44E3-A7EF-4E160E3DFB73} = {3DA56828-5C39-4872-A5A4-E3E50D9873BC}
 		{D1860D1A-69C7-40DF-8E39-2F1FC11579C9} = {3DA56828-5C39-4872-A5A4-E3E50D9873BC}
 		{5B6043D2-920C-5E45-D332-B7B7D0477165} = {3F1F3016-10C6-4BB9-8F0F-7E45F2CB2AB8}
+		{02FD5E1C-B9F2-4138-A650-5A0701C1BD8C} = {3F1F3016-10C6-4BB9-8F0F-7E45F2CB2AB8}
+		{62A835FE-26B3-45B2-9780-71D4EFF98092} = {3DA56828-5C39-4872-A5A4-E3E50D9873BC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {61234D5B-1E5E-4C97-89A1-FA97E4B63D95}
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		..\Objects\Converters\ConverterCSI\ConverterCSIShared\ConverterCSIShared.projitems*{02fd5e1c-b9f2-4138-a650-5a0701c1bd8c}*SharedItemsImports = 5
 		..\Objects\Converters\ConverterCSI\ConverterCSIShared\ConverterCSIShared.projitems*{14d40a8a-9f8f-44f6-b256-21b7f5cc4fb6}*SharedItemsImports = 5
 		..\Objects\Converters\ConverterCSI\ConverterCSIShared\ConverterCSIShared.projitems*{5b6043d2-920c-5e45-d332-b7b7d0477165}*SharedItemsImports = 5
 		..\Objects\Converters\ConverterCSI\ConverterCSIShared\ConverterCSIShared.projitems*{5bbde14e-50f8-4d6e-8e35-747667ad4a09}*SharedItemsImports = 13
 		ConnectorCSIShared\ConnectorCSIShared.projitems*{61374cd0-e774-4dcd-bfab-6356b0931283}*SharedItemsImports = 13
+		ConnectorCSIShared\ConnectorCSIShared.projitems*{62a835fe-26b3-45b2-9780-71d4eff98092}*SharedItemsImports = 5
 		..\Objects\Converters\ConverterCSI\ConverterCSIShared\ConverterCSIShared.projitems*{7572e400-c007-48e4-98fc-614fdee0b572}*SharedItemsImports = 5
 		ConnectorCSIShared\ConnectorCSIShared.projitems*{81299d15-5788-414d-a962-1a568c251323}*SharedItemsImports = 5
 		..\Objects\Converters\ConverterCSI\ConverterCSIShared\ConverterCSIShared.projitems*{8431e383-838b-4f0a-8065-979c3dae9ccb}*SharedItemsImports = 5

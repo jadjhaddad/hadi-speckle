@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 #if ETABS22
 using ETABSv1;
+#elif SAP26
+using SAP2000v1;
 #else
 using CSiAPIv1;
 #endif
@@ -87,6 +89,8 @@ internal class Element2DAnalyticalResultConverter
         areaName,
 #if ETABS22
         ETABSv1.eItemTypeElm.ObjectElm,
+#elif SAP26
+        SAP2000v1.eItemTypeElm.ObjectElm,
 #else
         CSiAPIv1.eItemTypeElm.ObjectElm,
 #endif
@@ -149,6 +153,8 @@ internal class Element2DAnalyticalResultConverter
         areaName,
 #if ETABS22
         ETABSv1.eItemTypeElm.ObjectElm,
+#elif SAP26
+        SAP2000v1.eItemTypeElm.ObjectElm,
 #else
         CSiAPIv1.eItemTypeElm.ObjectElm,
 

@@ -35,7 +35,7 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
   {
     Exceptions.Clear();
 
-#if ETABS22
+#if ETABS22 || SAP26
     SpeckleLog.Logger.Information("✅ Using direct converter reference for ETABS22 receive");
 
     // CRITICAL: Initialize KitManager to register types for deserialization

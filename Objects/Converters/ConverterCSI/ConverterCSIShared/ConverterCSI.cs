@@ -4,6 +4,8 @@ using System.Linq;
 using ConverterCSIShared.Models;
 #if ETABS22
 using ETABSv1;
+#elif SAP26
+using SAP2000v1;
 #else
 using CSiAPIv1;
 #endif
@@ -51,7 +53,11 @@ public partial class ConverterCSI : ISpeckleConverter, IFinalizable
 
   public string WebsiteOrEmail => "https://speckle.systems";
 
+#if SAP26
   public cSapModel Model { get; private set; }
+#else
+  public cSapModel Model { get; private set; }
+#endif
   public string ProgramVersion { get; private set; }
 
   public Model SpeckleModel { get; set; }
@@ -466,6 +472,8 @@ public partial class ConverterCSI : ISpeckleConverter, IFinalizable
   {
 #if ETABS22
     return new[] { "ETABS", "ETABS22" };
+#elif SAP26
+    return new[] { "SAP2000", "SAP2000v26", "SAP26" };
 #else
     return new[] { CSIAppName };
 #endif

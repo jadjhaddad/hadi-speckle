@@ -31,7 +31,7 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
 
   public override async Task<string> SendStream(StreamState state, ProgressViewModel progress)
   {
-#if ETABS22
+#if ETABS22 || SAP26
     SpeckleLog.Logger.Information("✅ Using direct converter reference for ETABS22");
 
     // Direct instantiation - no assembly loading, preserves type identity
