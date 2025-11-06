@@ -35,8 +35,14 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
   {
     Exceptions.Clear();
 
-#if ETABS22
+#if ETABS22 || CSIBRIDGE26 || CSIBRIDGE25
+    #if ETABS22
     SpeckleLog.Logger.Information("✅ Using direct converter reference for ETABS22 receive");
+    #elif CSIBRIDGE26
+    SpeckleLog.Logger.Information("✅ Using direct converter reference for CSiBridge26 receive");
+    #elif CSIBRIDGE25
+    SpeckleLog.Logger.Information("✅ Using direct converter reference for CSiBridge25 receive");
+    #endif
 
     // CRITICAL: Initialize KitManager to register types for deserialization
     // Even though we're not using KitManager to load the converter,

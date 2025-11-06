@@ -31,8 +31,14 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
 
   public override async Task<string> SendStream(StreamState state, ProgressViewModel progress)
   {
-#if ETABS22
+#if ETABS22 || CSIBRIDGE26 || CSIBRIDGE25
+    #if ETABS22
     SpeckleLog.Logger.Information("✅ Using direct converter reference for ETABS22");
+    #elif CSIBRIDGE26
+    SpeckleLog.Logger.Information("✅ Using direct converter reference for CSiBridge26");
+    #elif CSIBRIDGE25
+    SpeckleLog.Logger.Information("✅ Using direct converter reference for CSiBridge25");
+    #endif
 
     // Direct instantiation - no assembly loading, preserves type identity
     var converter = new Objects.Converter.CSI.ConverterCSI();
