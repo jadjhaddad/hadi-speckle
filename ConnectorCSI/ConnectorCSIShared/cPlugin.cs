@@ -34,12 +34,13 @@ public class cPlugin
     AppBuilder
       .Configure<DesktopUI2.App>()
       .UsePlatformDetect()
-      .With(new SkiaOptions { MaxGpuResourceSizeBytes = 8096000 })
 #if CSIBRIDGE
-      // CSIBridge: Disable GPU rendering to avoid conflicts with CSIBridge's own rendering
+      // CSIBridge: Force complete software rendering to avoid GPU conflicts
+      .With(new SkiaOptions { MaxGpuResourceSizeBytes = 0 })
       .With(new Win32PlatformOptions { AllowEglInitialization = false, EnableMultitouch = false, UseWgl = false })
 #else
       // ETABS and others: Use standard GPU rendering
+      .With(new SkiaOptions { MaxGpuResourceSizeBytes = 8096000 })
       .With(new Win32PlatformOptions { AllowEglInitialization = true, EnableMultitouch = false })
 #endif
       .LogToTrace()
@@ -131,29 +132,24 @@ public class cPlugin
       };
       SpeckleLog.Logger.Information("✅ Event handlers attached");
 
-#if CSIBRIDGE
-      SpeckleLog.Logger.Information("🔧 CSIBridge mode: Using MainWindow.Show() instead of app.Run()");
+      // Use standard Avalonia app.Run() pattern for all CSI products
+      // This ensures proper message loop and window lifecycle management
+      SpeckleLog.Logger.Information("🔧 Using app.Run(MainWindow) for proper event loop");
       SpeckleLog.Logger.Information("   Window initial state: Width={Width}, Height={Height}, WindowState={WindowState}",
         MainWindow.Width, MainWindow.Height, MainWindow.WindowState);
 
       try
       {
-        SpeckleLog.Logger.Information("🔧 Calling MainWindow.Show()...");
-        MainWindow.Show();
-        SpeckleLog.Logger.Information("✅ MainWindow.Show() returned successfully");
+        app.Run(MainWindow);
+        SpeckleLog.Logger.Information("✅ app.Run(MainWindow) completed successfully");
       }
-      catch (Exception showEx)
+      catch (Exception runEx)
       {
-        SpeckleLog.Logger.Fatal(showEx, "❌ CRASH in MainWindow.Show() within AppMain");
-        SpeckleLog.Logger.Error("   Exception type: {Type}", showEx.GetType().FullName);
-        SpeckleLog.Logger.Error("   Inner exception: {InnerException}", showEx.InnerException?.Message);
+        SpeckleLog.Logger.Fatal(runEx, "❌ CRASH in app.Run(MainWindow)");
+        SpeckleLog.Logger.Error("   Exception type: {Type}", runEx.GetType().FullName);
+        SpeckleLog.Logger.Error("   Inner exception: {InnerException}", runEx.InnerException?.Message);
         throw;
       }
-#else
-      // ETABS and others: Use the standard Avalonia app.Run() pattern
-      SpeckleLog.Logger.Information("🔧 ETABS mode: Using app.Run(MainWindow)");
-      app.Run(MainWindow);
-#endif
 
       SpeckleLog.Logger.Information("✅ AppMain completed");
     }

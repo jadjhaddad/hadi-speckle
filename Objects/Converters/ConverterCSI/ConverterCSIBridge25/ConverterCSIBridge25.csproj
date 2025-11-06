@@ -20,7 +20,8 @@
     <!-- CSiBridge 25 API Reference -->
     <!-- CSiBridge1.dll contains all API types (cSapModel, eItemTypeElm, etc.) -->
     <Reference Include="CSiAPIv1">
-      <HintPath>..\..\..\..\..\..\..\..\..\Program Files\Computers and Structures\CSiBridge 25\CSiAPIv1.dll</HintPath>
+      <HintPath>C:\Program Files\Computers and Structures\CSiBridge 25\CSiAPIv1.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="CSiBridge1">
       <HintPath>C:\Program Files\Computers and Structures\CSiBridge 25\CSiBridge1.dll</HintPath>

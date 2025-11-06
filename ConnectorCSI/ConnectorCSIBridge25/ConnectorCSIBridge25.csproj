@@ -28,24 +28,12 @@
   </Target>
 
   <!-- Automatically copy DLLs to CSiBridge Plug-Ins folder after build -->
+  <!-- Simplified to match ETABS22/CSIBridge26 pattern (single copy operation) -->
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <ItemGroup>
       <DllsToCopy Include="$(TargetDir)*.dll" />
-      <ConfigsToCopy Include="$(TargetDir)*.config" />
-      <RuntimesToCopy Include="$(TargetDir)runtimes\**\*.*" />
-      <NativeLibsToCopy Include="$(TargetDir)x86\**\*.*" />
-      <NativeLibsToCopy Include="$(TargetDir)x64\**\*.*" />
-      <NativeLibsToCopy Include="$(TargetDir)arm\**\*.*" />
-      <NativeLibsToCopy Include="$(TargetDir)arm64\**\*.*" />
-      <NativeLibsToCopy Include="$(TargetDir)musl-x64\**\*.*" />
-      <NativeLibsToCopy Include="$(TargetDir)Native\**\*.*" />
-      <DylibsToCopy Include="$(TargetDir)*.dylib" />
     </ItemGroup>
     <Copy SourceFiles="@(DllsToCopy)" DestinationFolder="C:\ProgramData\Computers and Structures\CSiBridge 25\Plug-Ins\" />
-    <Copy SourceFiles="@(ConfigsToCopy)" DestinationFolder="C:\ProgramData\Computers and Structures\CSiBridge 25\Plug-Ins\" />
-    <Copy SourceFiles="@(RuntimesToCopy)" DestinationFolder="C:\ProgramData\Computers and Structures\CSiBridge 25\Plug-Ins\runtimes\%(RecursiveDir)" />
-    <Copy SourceFiles="@(NativeLibsToCopy)" DestinationFolder="C:\ProgramData\Computers and Structures\CSiBridge 25\Plug-Ins\%(RecursiveDir)" />
-    <Copy SourceFiles="@(DylibsToCopy)" DestinationFolder="C:\ProgramData\Computers and Structures\CSiBridge 25\Plug-Ins\" />
   </Target>
 
   <Import Project="..\ConnectorCSIShared\ConnectorCSIShared.projitems" Label="Shared" />
