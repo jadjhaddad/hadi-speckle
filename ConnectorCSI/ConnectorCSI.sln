@@ -45,6 +45,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConnectorETABS22", "Connect
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConverterETABS22", "..\Objects\Converters\ConverterCSI\ConverterETABS22\ConverterETABS22.csproj", "{5B6043D2-920C-5E45-D332-B7B7D0477165}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConnectorCSIBridge26", "ConnectorCSIBridge26\ConnectorCSIBridge26.csproj", "{A1B2C3D4-E5F6-4789-A012-3456789ABCDE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConverterCSIBridge26", "..\Objects\Converters\ConverterCSI\ConverterCSIBridge26\ConverterCSIBridge26.csproj", "{B2C3D4E5-F6A7-4890-B123-456789ABCDEF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConnectorCSIBridge25", "ConnectorCSIBridge25\ConnectorCSIBridge25.csproj", "{E1F2A3B4-C5D6-4897-A123-456789ABCDEF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConverterCSIBridge25", "..\Objects\Converters\ConverterCSI\ConverterCSIBridge25\ConverterCSIBridge25.csproj", "{F2A3B4C5-D6E7-4901-B234-56789ABCDEF0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -115,6 +123,22 @@ Global
 		{5B6043D2-920C-5E45-D332-B7B7D0477165}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5B6043D2-920C-5E45-D332-B7B7D0477165}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5B6043D2-920C-5E45-D332-B7B7D0477165}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-4789-A012-3456789ABCDE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-4789-A012-3456789ABCDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-4789-A012-3456789ABCDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-4789-A012-3456789ABCDE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B2C3D4E5-F6A7-4890-B123-456789ABCDEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B2C3D4E5-F6A7-4890-B123-456789ABCDEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B2C3D4E5-F6A7-4890-B123-456789ABCDEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B2C3D4E5-F6A7-4890-B123-456789ABCDEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E1F2A3B4-C5D6-4897-A123-456789ABCDEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E1F2A3B4-C5D6-4897-A123-456789ABCDEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E1F2A3B4-C5D6-4897-A123-456789ABCDEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E1F2A3B4-C5D6-4897-A123-456789ABCDEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F2A3B4C5-D6E7-4901-B234-56789ABCDEF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F2A3B4C5-D6E7-4901-B234-56789ABCDEF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F2A3B4C5-D6E7-4901-B234-56789ABCDEF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F2A3B4C5-D6E7-4901-B234-56789ABCDEF0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -139,6 +163,10 @@ Global
 		{C59939F6-D383-44E3-A7EF-4E160E3DFB73} = {3DA56828-5C39-4872-A5A4-E3E50D9873BC}
 		{D1860D1A-69C7-40DF-8E39-2F1FC11579C9} = {3DA56828-5C39-4872-A5A4-E3E50D9873BC}
 		{5B6043D2-920C-5E45-D332-B7B7D0477165} = {3F1F3016-10C6-4BB9-8F0F-7E45F2CB2AB8}
+		{A1B2C3D4-E5F6-4789-A012-3456789ABCDE} = {3DA56828-5C39-4872-A5A4-E3E50D9873BC}
+		{B2C3D4E5-F6A7-4890-B123-456789ABCDEF} = {3F1F3016-10C6-4BB9-8F0F-7E45F2CB2AB8}
+		{E1F2A3B4-C5D6-4897-A123-456789ABCDEF} = {3DA56828-5C39-4872-A5A4-E3E50D9873BC}
+		{F2A3B4C5-D6E7-4901-B234-56789ABCDEF0} = {3F1F3016-10C6-4BB9-8F0F-7E45F2CB2AB8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {61234D5B-1E5E-4C97-89A1-FA97E4B63D95}
@@ -155,5 +183,9 @@ Global
 		ConnectorCSIShared\ConnectorCSIShared.projitems*{c091e499-597d-4077-b83f-08e069091090}*SharedItemsImports = 5
 		..\Objects\Converters\ConverterCSI\ConverterCSIShared\ConverterCSIShared.projitems*{c95c0d85-50c2-46d1-9e27-f86d0d40058c}*SharedItemsImports = 5
 		ConnectorCSIShared\ConnectorCSIShared.projitems*{d1860d1a-69c7-40df-8e39-2f1fc11579c9}*SharedItemsImports = 5
+		ConnectorCSIShared\ConnectorCSIShared.projitems*{a1b2c3d4-e5f6-4789-a012-3456789abcde}*SharedItemsImports = 5
+		..\Objects\Converters\ConverterCSI\ConverterCSIShared\ConverterCSIShared.projitems*{b2c3d4e5-f6a7-4890-b123-456789abcdef}*SharedItemsImports = 5
+		ConnectorCSIShared\ConnectorCSIShared.projitems*{e1f2a3b4-c5d6-4897-a123-456789abcdef}*SharedItemsImports = 5
+		..\Objects\Converters\ConverterCSI\ConverterCSIShared\ConverterCSIShared.projitems*{f2a3b4c5-d6e7-4901-b234-56789abcdef0}*SharedItemsImports = 5
 	EndGlobalSection
 EndGlobal
