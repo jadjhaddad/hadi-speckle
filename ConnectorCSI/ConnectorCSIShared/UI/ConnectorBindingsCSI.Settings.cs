@@ -66,7 +66,7 @@ public partial class ConnectorBindingsCSI : ConnectorBindings
         Name = "Send Extruded View",
         Icon = "Cube",
         Description = "Send the model with 3D extrusions instead of analytical wireframe.",
-        IsChecked = true
+        IsChecked = false
       }
     };
   }
