@@ -316,7 +316,64 @@ public partial class ConnectorBindingsAutocad : ConnectorBindings
 
           // find existing doc objects if they exist
           var existingObjs = new List<ObjectId>();
-          var layer = layers.ContainsKey(commitObj.Container) ? layers[commitObj.Container] : "0";
+
+          // Determine layer: use block/family name if available, otherwise use container
+          string layer = "0"; // default fallback
+
+          if (StoredObjects.TryGetValue(commitObj.OriginalId, out Base speckleObj))
+          {
+            string blockName = null;
+
+            // Check if this is a BlockInstance or similar object with a definition
+            var definition = speckleObj["definition"] as Base ?? speckleObj["@definition"] as Base ?? speckleObj["@blockDefinition"] as Base;
+
+            if (definition != null)
+            {
+              // Try to extract block name from definition
+              blockName = definition["name"] as string;
+
+              // For Revit families, might be in RevitSymbolElementType format (family + type)
+              if (string.IsNullOrEmpty(blockName) && definition["family"] is string family)
+              {
+                var type = definition["type"] as string;
+                blockName = string.IsNullOrEmpty(type) ? family : $"{family} - {type}";
+              }
+            }
+            // For direct Revit family instances that might have family property at root level
+            else if (speckleObj["family"] is string familyName)
+            {
+              var typeName = speckleObj["type"] as string;
+              blockName = string.IsNullOrEmpty(typeName) ? familyName : $"{familyName} - {typeName}";
+            }
+
+            // If we found a block name, check if a layer with that name exists
+            if (!string.IsNullOrEmpty(blockName))
+            {
+              var cleanBlockName = RemoveInvalidChars(blockName);
+              var layerTable = (LayerTable)tr.GetObject(Doc.Database.LayerTableId, OpenMode.ForRead);
+
+              if (layerTable.Has(cleanBlockName))
+              {
+                layer = cleanBlockName;
+              }
+              else
+              {
+                // Block name layer doesn't exist, fall back to container-based layer
+                layer = layers.ContainsKey(commitObj.Container) ? layers[commitObj.Container] : "0";
+              }
+            }
+            else
+            {
+              // Not a block instance, use container-based layer
+              layer = layers.ContainsKey(commitObj.Container) ? layers[commitObj.Container] : "0";
+            }
+          }
+          else
+          {
+            // Fallback to original behavior if object not in StoredObjects
+            layer = layers.ContainsKey(commitObj.Container) ? layers[commitObj.Container] : "0";
+          }
+
           if (state.ReceiveMode == ReceiveMode.Update) // existing objs will be removed if it exists in the received commit
           {
             existingObjs = ApplicationIdManager.GetObjectsByApplicationId(
