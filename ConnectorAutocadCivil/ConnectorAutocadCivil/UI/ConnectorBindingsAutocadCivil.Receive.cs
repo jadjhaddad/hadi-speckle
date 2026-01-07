@@ -317,62 +317,8 @@ public partial class ConnectorBindingsAutocad : ConnectorBindings
           // find existing doc objects if they exist
           var existingObjs = new List<ObjectId>();
 
-          // Determine layer: use block/family name if available, otherwise use container
-          string layer = "0"; // default fallback
-
-          if (StoredObjects.TryGetValue(commitObj.OriginalId, out Base speckleObj))
-          {
-            string blockName = null;
-
-            // Check if this is a BlockInstance or similar object with a definition
-            var definition = speckleObj["definition"] as Base ?? speckleObj["@definition"] as Base ?? speckleObj["@blockDefinition"] as Base;
-
-            if (definition != null)
-            {
-              // Try to extract block name from definition
-              blockName = definition["name"] as string;
-
-              // For Revit families, might be in RevitSymbolElementType format (family + type)
-              if (string.IsNullOrEmpty(blockName) && definition["family"] is string family)
-              {
-                var type = definition["type"] as string;
-                blockName = string.IsNullOrEmpty(type) ? family : $"{family} - {type}";
-              }
-            }
-            // For direct Revit family instances that might have family property at root level
-            else if (speckleObj["family"] is string familyName)
-            {
-              var typeName = speckleObj["type"] as string;
-              blockName = string.IsNullOrEmpty(typeName) ? familyName : $"{familyName} - {typeName}";
-            }
-
-            // If we found a block name, check if a layer with that name exists
-            if (!string.IsNullOrEmpty(blockName))
-            {
-              var cleanBlockName = RemoveInvalidChars(blockName);
-              var layerTable = (LayerTable)tr.GetObject(Doc.Database.LayerTableId, OpenMode.ForRead);
-
-              if (layerTable.Has(cleanBlockName))
-              {
-                layer = cleanBlockName;
-              }
-              else
-              {
-                // Block name layer doesn't exist, fall back to container-based layer
-                layer = layers.ContainsKey(commitObj.Container) ? layers[commitObj.Container] : "0";
-              }
-            }
-            else
-            {
-              // Not a block instance, use container-based layer
-              layer = layers.ContainsKey(commitObj.Container) ? layers[commitObj.Container] : "0";
-            }
-          }
-          else
-          {
-            // Fallback to original behavior if object not in StoredObjects
-            layer = layers.ContainsKey(commitObj.Container) ? layers[commitObj.Container] : "0";
-          }
+          // Determine layer: use family.type if available, otherwise use container
+          string layer = DetermineObjectLayer(commitObj, layers, layerTable, tr);
 
           if (state.ReceiveMode == ReceiveMode.Update) // existing objs will be removed if it exists in the received commit
           {
@@ -693,6 +639,109 @@ public partial class ConnectorBindingsAutocad : ConnectorBindings
         appObj.Status = toRemove.Count > 0 ? ApplicationObject.State.Updated : ApplicationObject.State.Created;
       }
     }
+  }
+
+  /// <summary>
+  /// Determines the appropriate layer for an object based on its family.type, falling back to container.
+  /// </summary>
+  private string DetermineObjectLayer(
+    ApplicationObject commitObj,
+    Dictionary<string, string> layers,
+    LayerTable layerTable,
+    Transaction tr
+  )
+  {
+    string containerLayer = layers.ContainsKey(commitObj.Container) ? layers[commitObj.Container] : "0";
+
+    if (!StoredObjects.TryGetValue(commitObj.OriginalId, out Base speckleObj))
+    {
+      SpeckleLog.Logger.Debug(
+        "Layer assignment for {ObjectId}: not in StoredObjects, using container layer '{Layer}'",
+        commitObj.OriginalId,
+        containerLayer
+      );
+      return containerLayer;
+    }
+
+    // Try to get family.type from definition or root object
+    string layerName = GetFamilyTypeLayerName(speckleObj);
+
+    if (string.IsNullOrEmpty(layerName))
+    {
+      SpeckleLog.Logger.Debug(
+        "Layer assignment for {ObjectId}: no family/type found, using container layer '{Layer}'",
+        commitObj.OriginalId,
+        containerLayer
+      );
+      return containerLayer;
+    }
+
+    var cleanLayerName = RemoveInvalidChars(layerName);
+
+    // Use existing layer or create new one
+    if (layerTable.Has(cleanLayerName))
+    {
+      SpeckleLog.Logger.Information(
+        "Layer assignment for {ObjectId}: using existing layer '{Layer}'",
+        commitObj.OriginalId,
+        cleanLayerName
+      );
+      return cleanLayerName;
+    }
+
+    if (Doc.GetOrMakeLayer(cleanLayerName, tr, out string createdLayerName))
+    {
+      SpeckleLog.Logger.Information(
+        "Layer assignment for {ObjectId}: created layer '{Layer}'",
+        commitObj.OriginalId,
+        createdLayerName
+      );
+      return createdLayerName;
+    }
+
+    SpeckleLog.Logger.Warning(
+      "Layer assignment for {ObjectId}: failed to create layer '{LayerName}', using container '{Layer}'",
+      commitObj.OriginalId,
+      cleanLayerName,
+      containerLayer
+    );
+    return containerLayer;
+  }
+
+  /// <summary>
+  /// Extracts family.type layer name from a Speckle object's definition or root properties.
+  /// </summary>
+  private static string GetFamilyTypeLayerName(Base speckleObj)
+  {
+    // Check for definition (BlockInstance, RevitInstance, etc.)
+    var definition = speckleObj["definition"] as Base
+      ?? speckleObj["@definition"] as Base
+      ?? speckleObj["@blockDefinition"] as Base;
+
+    if (definition != null)
+    {
+      // First try definition name (for AutoCAD blocks)
+      if (definition["name"] is string defName && !string.IsNullOrEmpty(defName))
+      {
+        return defName;
+      }
+
+      // Then try family.type (for Revit families)
+      if (definition["family"] is string defFamily)
+      {
+        var defType = definition["type"] as string;
+        return string.IsNullOrEmpty(defType) ? defFamily : $"{defFamily}.{defType}";
+      }
+    }
+
+    // Fall back to root-level family.type
+    if (speckleObj["family"] is string family)
+    {
+      var type = speckleObj["type"] as string;
+      return string.IsNullOrEmpty(type) ? family : $"{family}.{type}";
+    }
+
+    return null;
   }
 
   private bool DeleteBlocksWithPrefix(string prefix, Transaction tr, out List<string> failedBlocks)
